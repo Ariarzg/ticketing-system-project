@@ -1,0 +1,56 @@
+# ---------------------------------------------------------------
+# Keep the repository free of anything produced by or meant for AI tools.
+# ---------------------------------------------------------------
+
+# AI assistant instruction files and tool folders
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+GEMINI.md
+.claude/
+.mcp.json
+.mcp.*.json
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.continue/
+.codex/
+.gemini/
+.agents/
+.aider*
+.roo/
+.clinerules
+.cline/
+.kiro/
+.junie/
+.superpowers/
+.playwright-mcp/
+.github/copilot-instructions.md
+
+# Every markdown file is ignored except the decision records
+# (the planning docs, the guide and the AI notes are not part of the repo).
+*.md
+!DECISIONS.md
+!DECISIONS.fa.md
+# The README is for the person reviewing the project, so it stays.
+!/README.md
+
+# Screenshots
+screenshots/
+screenshot/
+Screenshot*
+screenshot-*
+screenshots-*
+
+# ---------------------------------------------------------------
+# Normal project files
+# ---------------------------------------------------------------
+node_modules/
+.next/
+.vercel/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+.DS_Store
