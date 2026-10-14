@@ -1,0 +1,101 @@
+/* file: src/app/globals.css */
+@import "tailwindcss";
+@import "@heroui/styles";
+
+/*
+  Design tokens. HeroUI reads these CSS variables, so overriding them re-themes every component.
+  One accent (cobalt), cool neutrals, one radius scale. The same names exist for light and dark.
+*/
+:root,
+.light,
+[data-theme="light"] {
+  --accent: oklch(0.55 0.19 260);
+  --accent-foreground: oklch(0.99 0 0);
+
+  --background: oklch(0.984 0.002 255);
+  --foreground: oklch(0.2 0.015 255);
+  --muted: oklch(0.5 0.016 255);
+
+  --surface: oklch(1 0 0);
+  --surface-secondary: oklch(0.966 0.003 255);
+  --surface-tertiary: oklch(0.945 0.004 255);
+  --overlay: oklch(1 0 0);
+
+  --default: oklch(0.955 0.004 255);
+  --border: oklch(0.912 0.005 255);
+  --separator: oklch(0.94 0.004 255);
+
+  --field-background: oklch(1 0 0);
+  --field-border-width: 1px;
+  --field-border: oklch(0.89 0.006 255);
+
+  --surface-shadow:
+    0 1px 2px oklch(0.3 0.03 255 / 0.05), 0 6px 20px -10px oklch(0.3 0.03 255 / 0.12);
+  --field-shadow: 0 1px 1px oklch(0.3 0.03 255 / 0.04);
+}
+
+.dark,
+[data-theme="dark"] {
+  --accent: oklch(0.72 0.14 256);
+  --accent-foreground: oklch(0.17 0.02 260);
+
+  --background: oklch(0.158 0.01 260);
+  --foreground: oklch(0.955 0.004 255);
+  --muted: oklch(0.72 0.014 255);
+
+  --surface: oklch(0.205 0.012 260);
+  --surface-secondary: oklch(0.25 0.012 260);
+  --surface-tertiary: oklch(0.28 0.012 260);
+  --overlay: oklch(0.225 0.012 260);
+
+  --default: oklch(0.275 0.012 260);
+  --border: oklch(0.31 0.012 260);
+  --separator: oklch(0.265 0.012 260);
+
+  --field-background: oklch(0.205 0.012 260);
+  --field-border-width: 1px;
+  --field-border: oklch(0.33 0.012 260);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Dropdowns render a hidden native <select> that can poke out a few pixels and create a sideways scrollbar. */
+html,
+body {
+  overflow-x: clip;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-vazir), system-ui, sans-serif;
+}
+
+/* Soft entrance for page content and list rows. Motion only when the user has not asked to reduce it. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+}
+
+/* The brand panel on the login and signup pages: two soft accent glows on a quiet surface. */
+.brand-panel {
+  background:
+    radial-gradient(55% 45% at 15% 8%, color-mix(in oklab, var(--accent) 24%, transparent), transparent 70%),
+    radial-gradient(50% 40% at 95% 95%, color-mix(in oklab, var(--accent) 16%, transparent), transparent 70%),
+    var(--surface-secondary);
+}
