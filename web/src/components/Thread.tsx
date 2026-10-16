@@ -74,7 +74,8 @@ export function Thread({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
               value={body}
               onChange={(e) => setBody(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                // Enter sends, Shift+Enter makes a new line; ignore Enter while an IME is still composing a word.
+                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                   e.preventDefault();
                   submit();
                 }
@@ -84,7 +85,6 @@ export function Thread({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
             <div className="flex items-center justify-between gap-3">
               <span className="hidden items-center gap-1.5 text-xs text-muted sm:flex">
                 <Kbd dir="ltr">
-                  <Kbd.Abbr keyValue="ctrl" />
                   <Kbd.Content>Enter</Kbd.Content>
                 </Kbd>
                 {t.thread.sendHint}
