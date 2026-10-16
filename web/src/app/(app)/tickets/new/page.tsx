@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Input, Label, TextArea, TextField, toast } from "@heroui/react";
+import { Button, Description, FieldError, Input, Label, TextArea, TextField, toast } from "@heroui/react";
 import { PageHeader } from "@/components/PageHeader";
 import { SelectField } from "@/components/SelectField";
 import { api } from "@/lib/api-client";
@@ -51,13 +51,30 @@ export default function NewTicketPage() {
           create.mutate();
         }}
       >
-        <TextField fullWidth isRequired value={title} onChange={setTitle}>
+        <TextField
+          fullWidth
+          isRequired
+          maxLength={120}
+          validate={(v) => (v.trim().length < 3 ? t.tickets.titleTooShort : null)}
+          value={title}
+          onChange={setTitle}
+        >
           <Label>{t.tickets.fieldTitle}</Label>
           <Input dir="auto" placeholder={t.tickets.titlePlaceholder} />
+          <FieldError />
         </TextField>
-        <TextField fullWidth isRequired value={description} onChange={setDescription}>
+        <TextField
+          fullWidth
+          isRequired
+          maxLength={5000}
+          validate={(v) => (v.trim().length < 10 ? t.tickets.descriptionTooShort : null)}
+          value={description}
+          onChange={setDescription}
+        >
           <Label>{t.tickets.fieldDescription}</Label>
           <TextArea dir="auto" rows={7} placeholder={t.tickets.descriptionPlaceholder} />
+          <Description>{t.tickets.descriptionHint}</Description>
+          <FieldError />
         </TextField>
         <SelectField
           label={t.tickets.fieldPriority}
