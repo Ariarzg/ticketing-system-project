@@ -18,7 +18,8 @@ export function formatDate(value: string | Date): string {
 /** "۳ ساعت پیش", "دیروز", or a plain Jalali date once it is older than a week. */
 export function formatRelative(value: string | Date): string {
   const date = new Date(value);
-  const seconds = Math.round((date.getTime() - Date.now()) / 1000);
+  // Never "from now": the server's clock stamps the time, and a viewer's clock running behind would make it look future.
+  const seconds = Math.min(0, Math.round((date.getTime() - Date.now()) / 1000));
   const abs = Math.abs(seconds);
   if (abs < 45) return relative.format(0, "second");
   if (abs < 3600) return relative.format(Math.round(seconds / 60), "minute");
