@@ -1,18 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Avatar, Button, Drawer, Skeleton, useOverlayState } from "@heroui/react";
+import { Avatar, Button, Drawer, Skeleton, toast, useOverlayState } from "@heroui/react";
 import { ListIcon, SignOutIcon } from "@phosphor-icons/react";
+import { LoadingButton } from "@/components/LoadingButton";
 import { Logo } from "@/components/Logo";
 import { NavLinks } from "@/components/NavLinks";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { api } from "@/lib/api-client";
+import { errorMessage } from "@/lib/errors";
 import { useMe, type MeUser } from "@/lib/hooks/use-me";
 import { initials } from "@/lib/initials";
 import { t } from "@/lib/strings.fa";
 
-function UserBlock({ me, onLogout }: { me: MeUser; onLogout: () => void }) {
+function UserBlock({ me, onLogout, loggingOut }: { me: MeUser; onLogout: () => void; loggingOut: boolean }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3">
       <Avatar size="sm" color="accent" variant="soft">
@@ -22,9 +25,15 @@ function UserBlock({ me, onLogout }: { me: MeUser; onLogout: () => void }) {
         <p className="truncate text-sm font-semibold">{me.name}</p>
         <p className="text-xs text-muted">{t.role[me.role]}</p>
       </div>
-      <Button isIconOnly size="sm" variant="ghost" aria-label={t.auth.logout} onPress={onLogout}>
-        <SignOutIcon size={18} />
-      </Button>
+      <LoadingButton
+        isIconOnly
+        size="sm"
+        variant="ghost"
+        aria-label={t.auth.logout}
+        isPending={loggingOut}
+        icon={<SignOutIcon size={18} />}
+        onPress={onLogout}
+      />
     </div>
   );
 }
@@ -44,19 +53,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const drawer = useOverlayState();
-  const { data: me, isError, refetch } = useMe();
+  const [loggingOut, setLoggingOut] = useState(false);
+  const { data: me, isError, isFetching, refetch } = useMe();
 
   async function logout() {
-    await api("/api/auth/logout", { method: "POST" });
-    queryClient.clear();
-    router.replace("/login");
+    setLoggingOut(true);
+    try {
+      await api("/api/auth/logout", { method: "POST" });
+      queryClient.clear();
+      router.replace("/login");
+    } catch (err) {
+      toast.danger(errorMessage(err));
+      setLoggingOut(false); // on success the page changes, so the flag is only reset on failure
+    }
   }
 
   if (isError) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-3">
         <p>{t.errors.server}</p>
-        <Button onPress={() => refetch()}>{t.common.retry}</Button>
+        <LoadingButton isPending={isFetching} onPress={() => refetch()}>
+          {t.common.retry}
+        </LoadingButton>
       </div>
     );
   }
@@ -76,7 +94,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <span className="text-xs text-muted">{t.theme.label}</span>
             <ThemeToggle />
           </div>
-          <UserBlock me={me} onLogout={logout} />
+          <UserBlock me={me} onLogout={logout} loggingOut={loggingOut} />
         </div>
       </aside>
 
@@ -99,7 +117,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Drawer.Body className="flex flex-col gap-6">
                   <NavLinks me={me} onNavigate={drawer.close} />
                   <div className="mt-auto">
-                    <UserBlock me={me} onLogout={logout} />
+                    <UserBlock me={me} onLogout={logout} loggingOut={loggingOut} />
                   </div>
                 </Drawer.Body>
               </Drawer.Dialog>

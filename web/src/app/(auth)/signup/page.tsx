@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button, Description, Input, Label, TextField, toast } from "@heroui/react";
+import { Description, Input, Label, TextField, toast } from "@heroui/react";
 import { SelectField } from "@/components/SelectField";
+import { LoadingButton } from "@/components/LoadingButton";
 import { api } from "@/lib/api-client";
 import { DEPARTMENTS } from "@/lib/constants";
 import { errorMessage } from "@/lib/errors";
@@ -24,6 +25,7 @@ export default function SignupPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (pending) return; // isPending keeps the button focusable, so Enter in a field could still submit twice
     if (!department) {
       toast.danger(t.auth.departmentRequired);
       return;
@@ -70,9 +72,9 @@ export default function SignupPage() {
           options={departmentOptions}
           onChange={setDepartment}
         />
-        <Button type="submit" variant="primary" size="lg" fullWidth isDisabled={pending} className="mt-2">
+        <LoadingButton type="submit" variant="primary" size="lg" fullWidth isPending={pending} className="mt-2">
           {t.auth.signupButton}
-        </Button>
+        </LoadingButton>
       </form>
       <p className="text-sm text-muted">
         {t.auth.haveAccount}{" "}

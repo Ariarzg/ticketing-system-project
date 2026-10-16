@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button, Kbd, Skeleton, TextArea } from "@heroui/react";
+import { Kbd, Skeleton, TextArea } from "@heroui/react";
 import { LockSimpleIcon, PaperPlaneTiltIcon } from "@phosphor-icons/react";
 import { useMessages, useSendMessage } from "@/lib/hooks/use-messages";
 import type { MeUser } from "@/lib/hooks/use-me";
 import type { TicketDto } from "@/lib/hooks/use-tickets";
 import { t } from "@/lib/strings.fa";
+import { LoadingButton } from "./LoadingButton";
 import { MessageBubble } from "./MessageBubble";
 
 export function Thread({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
@@ -89,10 +90,16 @@ export function Thread({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
                 </Kbd>
                 {t.thread.sendHint}
               </span>
-              <Button type="submit" variant="primary" isDisabled={send.isPending || body.trim() === ""} className="ms-auto">
-                <PaperPlaneTiltIcon size={18} />
+              <LoadingButton
+                type="submit"
+                variant="primary"
+                isPending={send.isPending}
+                isDisabled={body.trim() === ""}
+                icon={<PaperPlaneTiltIcon size={18} />}
+                className="ms-auto"
+              >
                 {t.thread.send}
-              </Button>
+              </LoadingButton>
             </div>
           </form>
         )}

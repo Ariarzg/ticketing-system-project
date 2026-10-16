@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button, Input, Label, TextField, toast } from "@heroui/react";
+import { Input, Label, TextField, toast } from "@heroui/react";
+import { LoadingButton } from "@/components/LoadingButton";
 import { api } from "@/lib/api-client";
 import { errorMessage } from "@/lib/errors";
 import { t } from "@/lib/strings.fa";
@@ -18,6 +19,7 @@ export default function LoginPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (pending) return; // isPending keeps the button focusable, so Enter in a field could still submit twice
     setPending(true);
     try {
       await api("/api/auth/login", { method: "POST", json: { email, password } });
@@ -45,9 +47,9 @@ export default function LoginPage() {
           <Label>{t.auth.password}</Label>
           <Input dir="ltr" autoComplete="current-password" />
         </TextField>
-        <Button type="submit" variant="primary" size="lg" fullWidth isDisabled={pending} className="mt-2">
+        <LoadingButton type="submit" variant="primary" size="lg" fullWidth isPending={pending} className="mt-2">
           {t.auth.loginButton}
-        </Button>
+        </LoadingButton>
       </form>
       <p className="text-sm text-muted">
         {t.auth.noAccount}{" "}

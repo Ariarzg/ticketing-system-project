@@ -5,6 +5,7 @@ export const t = {
   common: {
     retry: "تلاش دوباره",
     cancel: "انصراف",
+    loading: "در حال انجام…",
   },
 
   // Only used by the v0.1 smoke test; safe to delete after v0.3.

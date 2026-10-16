@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@heroui/react";
 import { ArrowsClockwiseIcon, CheckCircleIcon, LockSimpleIcon } from "@phosphor-icons/react";
+import { LoadingButton } from "@/components/LoadingButton";
 import { useSetStatus } from "@/lib/hooks/use-set-status";
 import type { TicketDto } from "@/lib/hooks/use-tickets";
 import { t } from "@/lib/strings.fa";
@@ -30,17 +30,18 @@ export function StatusControl({ ticket }: { ticket: TicketDto }) {
       {targets
         .filter((x) => x.to !== ticket.status)
         .map(({ to, label, icon: Icon }) => (
-          <Button
+          <LoadingButton
             key={to}
             size="sm"
             fullWidth
             variant={to === "closed" ? "danger-soft" : "secondary"}
-            isDisabled={setStatus.isPending}
+            isPending={setStatus.isPending && setStatus.variables === to}
+            isDisabled={setStatus.isPending && setStatus.variables !== to}
+            icon={<Icon size={16} />}
             onPress={() => choose(to)}
           >
-            <Icon size={16} />
             {label}
-          </Button>
+          </LoadingButton>
         ))}
     </div>
   );

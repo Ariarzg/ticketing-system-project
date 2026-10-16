@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Description, FieldError, Input, Label, TextArea, TextField, toast } from "@heroui/react";
+import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { SelectField } from "@/components/SelectField";
 import { api } from "@/lib/api-client";
@@ -48,7 +49,7 @@ export default function NewTicketPage() {
         className="flex flex-col gap-5 rounded-2xl border border-border bg-surface p-5 shadow-[var(--surface-shadow)] sm:p-6"
         onSubmit={(e) => {
           e.preventDefault();
-          create.mutate();
+          if (!create.isPending) create.mutate();
         }}
       >
         <TextField
@@ -87,9 +88,9 @@ export default function NewTicketPage() {
           <Button variant="tertiary" onPress={() => router.push("/tickets")}>
             {t.common.cancel}
           </Button>
-          <Button type="submit" variant="primary" isDisabled={create.isPending}>
+          <LoadingButton type="submit" variant="primary" isPending={create.isPending}>
             {t.tickets.submit}
-          </Button>
+          </LoadingButton>
         </div>
       </form>
     </div>
