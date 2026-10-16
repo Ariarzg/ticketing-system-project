@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Skeleton, toast } from "@heroui/react";
 import { ArrowRightIcon } from "@phosphor-icons/react";
-import { MessageBubble } from "@/components/MessageBubble";
+import { Thread } from "@/components/Thread";
 import { TicketInfo } from "@/components/TicketInfo";
 import { ApiError } from "@/lib/api-client";
 import { useMe } from "@/lib/hooks/use-me";
@@ -47,14 +47,10 @@ export default function TicketPage() {
         </h1>
       </div>
 
+      {/* The facts panel comes first on small screens so an agent sees the status controls without scrolling. */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start">
-        <div className="order-2 rounded-2xl border border-border bg-surface p-4 shadow-[var(--surface-shadow)] sm:p-5 lg:order-1">
-          <MessageBubble
-            author={ticket.authorName}
-            body={ticket.description}
-            createdAt={ticket.createdAt}
-            mine={ticket.authorId === me.id}
-          />
+        <div className="order-2 lg:order-1">
+          <Thread ticket={ticket} me={me} />
         </div>
         <div className="order-1 lg:order-2">
           <TicketInfo ticket={ticket} me={me} />
