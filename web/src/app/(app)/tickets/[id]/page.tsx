@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Skeleton, toast } from "@heroui/react";
 import { ArrowRightIcon } from "@phosphor-icons/react";
+import { PriorityChip, StatusChip } from "@/components/chips";
 import { Thread } from "@/components/Thread";
 import { TicketInfo } from "@/components/TicketInfo";
 import { ApiError } from "@/lib/api-client";
@@ -25,6 +26,18 @@ export default function TicketPage() {
     }
   }, [error, router]);
 
+  // The ticket is loaded in the browser, so its title cannot come from metadata. The old title comes back on
+  // leave: the list shares this page's metadata title, so Next would not reset it.
+  const title = ticket?.title;
+  useEffect(() => {
+    if (!title) return;
+    const before = document.title;
+    document.title = `${title} · ${t.appName}`;
+    return () => {
+      document.title = before;
+    };
+  }, [title]);
+
   if (!ticket || !me) {
     return (
       <div className="space-y-4">
@@ -35,6 +48,8 @@ export default function TicketPage() {
     );
   }
 
+  const isAgent = me.role === "agent";
+
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -42,17 +57,25 @@ export default function TicketPage() {
           <ArrowRightIcon size={16} />
           {t.tickets.back}
         </Link>
-        <h1 dir="auto" className="mt-3 text-2xl font-bold leading-snug tracking-tight">
+        {/* dir="auto" keeps an English title in its own order; text-right keeps it on the page's side. */}
+        <h1 dir="auto" className="mt-3 text-right text-2xl font-bold leading-snug tracking-tight break-words">
           {ticket.title}
         </h1>
+        {/* Clients read the conversation first on a phone, so the facts panel moves below it; this line keeps the status in view. */}
+        {!isAgent && (
+          <div className="mt-2 flex items-center gap-2 lg:hidden">
+            <StatusChip status={ticket.status} withLabel />
+            <PriorityChip priority={ticket.priority} withLabel />
+          </div>
+        )}
       </div>
 
-      {/* The facts panel comes first on small screens so an agent sees the status controls without scrolling. */}
+      {/* For agents the facts panel comes first on small screens, so the status buttons are visible without scrolling. */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start">
-        <div className="order-2 lg:order-1">
+        <div className={isAgent ? "order-2 lg:order-1" : "order-1"}>
           <Thread ticket={ticket} me={me} />
         </div>
-        <div className="order-1 lg:order-2">
+        <div className={isAgent ? "order-1 lg:order-2" : "order-2"}>
           <TicketInfo ticket={ticket} me={me} />
         </div>
       </div>

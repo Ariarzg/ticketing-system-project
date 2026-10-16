@@ -15,7 +15,15 @@ export function NavLinks({ me, onNavigate }: { me: MeUser; onNavigate?: () => vo
       ? [{ href: "/tickets/new", label: t.nav.newTicket, icon: PlusCircleIcon, match: (p: string) => p === "/tickets/new" }]
       : []),
     ...(me.role === "agent"
-      ? [{ href: "/users", label: t.nav.users, icon: UsersThreeIcon, match: (p: string) => p === "/users" }]
+      ? [
+          {
+            href: "/users",
+            label: t.nav.users,
+            icon: UsersThreeIcon,
+            // A client's profile belongs to "Users"; the agent's own profile is "My profile".
+            match: (p: string) => p === "/users" || (p.startsWith("/users/") && p !== `/users/${me.slug}`),
+          },
+        ]
       : []),
     {
       href: `/users/${me.slug}`,

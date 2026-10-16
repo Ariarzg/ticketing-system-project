@@ -1,8 +1,9 @@
 "use client";
 
 import { Suspense } from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Button, Pagination } from "@heroui/react";
+import { Button, Pagination, buttonVariants } from "@heroui/react";
 import { MagnifyingGlassIcon, PlusIcon, TicketIcon } from "@phosphor-icons/react";
 import { EmptyBox } from "@/components/EmptyBox";
 import { PageHeader } from "@/components/PageHeader";
@@ -47,12 +48,13 @@ function TicketsView() {
   const last = Math.min(totalPages, page + 2);
   const pages = Array.from({ length: last - first + 1 }, (_, i) => first + i);
 
+  // Links, not buttons: they navigate, so Ctrl/middle click opens them in a new tab.
   const newTicketButton =
     me?.role === "client" ? (
-      <Button variant="primary" onPress={() => router.push("/tickets/new")}>
+      <Link href="/tickets/new" className={buttonVariants({ variant: "primary" })}>
         <PlusIcon size={18} />
         {t.nav.newTicket}
-      </Button>
+      </Link>
     ) : undefined;
 
   return (
@@ -69,7 +71,7 @@ function TicketsView() {
           setParams={setParams}
           isAgent={isAgent}
           statusCounts={data?.statusCounts}
-          attentionCount={data?.attentionCount ?? 0}
+          attentionCount={data?.attentionCount}
         />
       )}
 
@@ -100,9 +102,9 @@ function TicketsView() {
                   hint={me?.role === "client" ? t.tickets.emptyClientHint : t.tickets.emptyAgentHint}
                   action={
                     me?.role === "client" ? (
-                      <Button size="sm" variant="primary" onPress={() => router.push("/tickets/new")}>
+                      <Link href="/tickets/new" className={buttonVariants({ size: "sm", variant: "primary" })}>
                         {t.nav.newTicket}
-                      </Button>
+                      </Link>
                     ) : undefined
                   }
                 />

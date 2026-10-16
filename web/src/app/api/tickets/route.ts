@@ -40,11 +40,20 @@ export const GET = handle(async (req) => {
     db.select({ total: count() }).from(tickets).innerJoin(users, eq(tickets.userId, users.id)).where(where),
   ]);
 
-  // Counts per status for the tabs. They follow the user's scope but ignore the filters, so every tab always shows its own total.
+  // Counts per status for the tabs. They follow the search, priority and department, but not the status tab itself,
+  // so each tab says how many rows it would show and "all" matches the list under it.
   const countRows = await db
     .select({ status: tickets.status, n: count() })
     .from(tickets)
-    .where(ticketScope(user))
+    .innerJoin(users, eq(tickets.userId, users.id))
+    .where(
+      and(
+        ticketScope(user),
+        query.priority ? eq(tickets.priority, query.priority) : undefined,
+        query.department ? eq(tickets.department, query.department) : undefined,
+        search,
+      ),
+    )
     .groupBy(tickets.status);
   const statusCounts = Object.fromEntries(STATUSES.map((s) => [s, 0])) as Record<(typeof STATUSES)[number], number>;
   for (const row of countRows) statusCounts[row.status] = row.n;

@@ -26,11 +26,12 @@ export function TicketFilters({
   /** Changes several URL parameters in one navigation. A null value removes the parameter. */
   setParams: (updates: Record<string, string | null>) => void;
   isAgent: boolean;
+  /** Undefined while the list loads, so the tabs show no number instead of a false zero. */
   statusCounts?: Record<Status, number>;
-  attentionCount: number;
+  attentionCount?: number;
 }) {
   const view = params.get("attention") === "1" ? "attention" : (params.get("status") ?? "all");
-  const total = statusCounts ? STATUSES.reduce((sum, s) => sum + statusCounts[s], 0) : 0;
+  const total = statusCounts ? STATUSES.reduce((sum, s) => sum + statusCounts[s], 0) : undefined;
   const pick = (key: string) => (value: string) => setParams({ [key]: value === "all" ? null : value });
 
   // The tabs set either ?status=... or ?attention=1, never both.
@@ -49,7 +50,19 @@ export function TicketFilters({
 
   return (
     <div className="flex flex-col gap-3">
-      <Tabs selectedKey={view} onSelectionChange={(key) => selectView(String(key))}>
+      {/* Six tabs do not fit a phone, and HeroUI's scroll arrows are labelled in English, so small screens get a select. */}
+      <SelectField
+        className="md:hidden"
+        label={t.filters.viewLabel}
+        hideLabel
+        value={view}
+        options={tabs.map((tab) => ({
+          id: tab.id,
+          label: tab.count === undefined ? tab.label : `${tab.label} (${tab.count.toLocaleString("fa-IR")})`,
+        }))}
+        onChange={selectView}
+      />
+      <Tabs className="hidden md:block" selectedKey={view} onSelectionChange={(key) => selectView(String(key))}>
         <Tabs.ListContainer className="overflow-x-auto">
           <Tabs.List aria-label={t.filters.viewLabel}>
             {tabs.map((tab) => (

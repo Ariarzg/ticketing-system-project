@@ -35,6 +35,9 @@ GEMINI.md
 !DECISIONS.fa.md
 # The README is for the person reviewing the project, so it stays.
 !/README.md
+# Private code audit and UI review notes (already covered by *.md, listed so it is explicit).
+CODE-AUDIT.md
+UI-UX-REVIEW.md
 
 # Screenshots
 screenshots/

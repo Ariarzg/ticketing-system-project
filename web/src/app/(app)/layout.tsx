@@ -22,7 +22,9 @@ function UserBlock({ me, onLogout, loggingOut }: { me: MeUser; onLogout: () => v
         <Avatar.Fallback>{initials(me.name)}</Avatar.Fallback>
       </Avatar>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold">{me.name}</p>
+        <p dir="auto" className="truncate text-right text-sm font-semibold">
+          {me.name}
+        </p>
         <p className="text-xs text-muted">{t.role[me.role]}</p>
       </div>
       <LoadingButton
@@ -83,6 +85,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh">
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground focus:not-sr-only focus:fixed focus:start-3 focus:top-3"
+      >
+        {t.nav.skip}
+      </a>
+
       {/* Desktop: fixed sidebar on the start side (the right in RTL). */}
       <aside className="fixed inset-y-0 start-0 z-30 hidden w-72 flex-col gap-6 border-e border-border bg-background p-4 lg:flex">
         <div className="px-2 pt-2">
@@ -108,7 +117,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {/* In RTL the placement follows the reading direction, so "left" opens from the start side (the right). */}
             <Drawer.Content placement="left">
               <Drawer.Dialog>
-                <Drawer.CloseTrigger />
+                <Drawer.CloseTrigger aria-label={t.nav.closeMenu} />
                 <Drawer.Header>
                   <Drawer.Heading>
                     <Logo />
@@ -129,7 +138,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <ThemeToggle />
       </header>
 
-      <main className="lg:ps-72">
+      <main id="main" tabIndex={-1} className="outline-none lg:ps-72">
         <div className="rise mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">{children}</div>
       </main>
     </div>

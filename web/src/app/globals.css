@@ -4,57 +4,109 @@
 
 /*
   Design tokens. HeroUI reads these CSS variables, so overriding them re-themes every component.
-  One accent (cobalt), cool neutrals, one radius scale. The same names exist for light and dark.
+  Mint accent and green-grey neutrals (hue 155), made with the HeroUI theme builder.
+  Values marked "AA" are darker than the builder's, so text stays readable (4.5:1) and focus rings visible (3:1).
+  HeroUI's own defaults sit in @layer base, so these rules always win. That is also why every token set in the
+  light block is set again in the dark block: otherwise the light value would leak into dark mode.
 */
 :root,
 .light,
-[data-theme="light"] {
-  --accent: oklch(0.55 0.19 260);
-  --accent-foreground: oklch(0.99 0 0);
+.default,
+[data-theme="light"],
+[data-theme="default"] {
+  color-scheme: light;
 
-  --background: oklch(0.984 0.002 255);
-  --foreground: oklch(0.2 0.015 255);
-  --muted: oklch(0.5 0.016 255);
+  --accent: oklch(82% 0.12 155);
+  --accent-foreground: oklch(15% 0.024 155);
+  /* AA: the mint is 1.7:1 on white, so accent-coloured text (links, active nav, soft chips, secondary buttons, avatars) uses a darker green. */
+  --accent-soft-foreground: oklch(49% 0.1 155);
+  --focus: oklch(60% 0.1 155); /* AA: 3.3:1 or more on every light surface */
 
-  --surface: oklch(1 0 0);
-  --surface-secondary: oklch(0.966 0.003 255);
-  --surface-tertiary: oklch(0.945 0.004 255);
-  --overlay: oklch(1 0 0);
+  --background: oklch(97.02% 0.0015 155);
+  --foreground: oklch(21.03% 0.0015 155);
+  --muted: oklch(50% 0.003 155); /* AA (builder: 55.17%) */
 
-  --default: oklch(0.955 0.004 255);
-  --border: oklch(0.912 0.005 255);
-  --separator: oklch(0.94 0.004 255);
+  --surface: oklch(100% 0.0008 155);
+  --surface-foreground: oklch(21.03% 0.0015 155);
+  --surface-secondary: oklch(95.24% 0.0012 155);
+  --surface-secondary-foreground: oklch(21.03% 0.0015 155);
+  --surface-tertiary: oklch(93.73% 0.0012 155);
+  --surface-tertiary-foreground: oklch(21.03% 0.0015 155);
+  --overlay: oklch(100% 0.0004 155);
+  --overlay-foreground: oklch(21.03% 0.0015 155);
 
-  --field-background: oklch(1 0 0);
+  --default: oklch(94% 0.0015 155);
+  --default-foreground: oklch(21.03% 0.0059 155);
+  --segment: oklch(100% 0.0015 155);
+  --segment-foreground: oklch(21.03% 0.0015 155);
+  --border: oklch(90% 0.0015 155);
+  --separator: oklch(92% 0.0015 155);
+  --scrollbar: oklch(87.1% 0.0015 155);
+
+  --field-background: oklch(100% 0.0008 155);
+  --field-foreground: oklch(21.03% 0.0015 155);
+  --field-placeholder: oklch(50% 0.003 155); /* AA (builder: 55.17%) */
+  --field-border: oklch(88% 0.004 155); /* builder: transparent, which hides fields on white cards */
   --field-border-width: 1px;
-  --field-border: oklch(0.89 0.006 255);
+
+  --danger: oklch(56% 0.2 13.88); /* AA: the builder's 65.32% is 3.3:1 as text and 3.5:1 under white text */
+  --danger-foreground: oklch(99.11% 0 0);
+  --success: oklch(73.29% 0.1941 138.95);
+  --success-foreground: oklch(21.03% 0.0059 138.95);
+  --warning: oklch(78.19% 0.159 60.47);
+  --warning-foreground: oklch(21.03% 0.0059 60.47);
+
+  --radius: 0.5rem;
+  --field-radius: 0.75rem;
+  /* Vazirmatn has Persian and Latin letters; the builder's Inter has no Persian. */
+  --font-sans: var(--font-vazir), system-ui, sans-serif;
 
   --surface-shadow:
-    0 1px 2px oklch(0.3 0.03 255 / 0.05), 0 6px 20px -10px oklch(0.3 0.03 255 / 0.12);
-  --field-shadow: 0 1px 1px oklch(0.3 0.03 255 / 0.04);
+    0 1px 2px oklch(0.3 0.02 155 / 0.05), 0 6px 20px -10px oklch(0.3 0.02 155 / 0.12);
+  --field-shadow: 0 1px 1px oklch(0.3 0.02 155 / 0.04);
 }
 
 .dark,
 [data-theme="dark"] {
-  --accent: oklch(0.72 0.14 256);
-  --accent-foreground: oklch(0.17 0.02 260);
+  color-scheme: dark;
 
-  --background: oklch(0.158 0.01 260);
-  --foreground: oklch(0.955 0.004 255);
-  --muted: oklch(0.72 0.014 255);
+  --accent: oklch(82% 0.12 155);
+  --accent-foreground: oklch(15% 0.024 155);
+  --accent-soft-foreground: var(--accent); /* on dark surfaces the mint itself is readable */
+  --focus: oklch(82% 0.12 155);
 
-  --surface: oklch(0.205 0.012 260);
-  --surface-secondary: oklch(0.25 0.012 260);
-  --surface-tertiary: oklch(0.28 0.012 260);
-  --overlay: oklch(0.225 0.012 260);
+  --background: oklch(12% 0.0015 155);
+  --foreground: oklch(99.11% 0.0015 155);
+  --muted: oklch(70.5% 0.003 155);
 
-  --default: oklch(0.275 0.012 260);
-  --border: oklch(0.31 0.012 260);
-  --separator: oklch(0.265 0.012 260);
+  --surface: oklch(21.03% 0.003 155);
+  --surface-foreground: oklch(99.11% 0.0015 155);
+  --surface-secondary: oklch(25.7% 0.0023 155);
+  --surface-secondary-foreground: oklch(99.11% 0.0015 155);
+  --surface-tertiary: oklch(27.21% 0.0023 155);
+  --surface-tertiary-foreground: oklch(99.11% 0.0015 155);
+  --overlay: oklch(21.03% 0.003 155);
+  --overlay-foreground: oklch(99.11% 0.0015 155);
 
-  --field-background: oklch(0.205 0.012 260);
-  --field-border-width: 1px;
-  --field-border: oklch(0.33 0.012 260);
+  --default: oklch(27.4% 0.0015 155);
+  --default-foreground: oklch(99.11% 0 0);
+  --segment: oklch(39.64% 0.0015 155);
+  --segment-foreground: oklch(99.11% 0.0015 155);
+  --border: oklch(28% 0.0015 155);
+  --separator: oklch(25% 0.0015 155);
+  --scrollbar: oklch(70.5% 0.0015 155);
+
+  --field-background: oklch(21.03% 0.003 155);
+  --field-foreground: oklch(99.11% 0.0015 155);
+  --field-placeholder: oklch(70.5% 0.003 155);
+  --field-border: oklch(33% 0.004 155); /* builder: transparent; the field background equals the card's */
+
+  --danger: oklch(66% 0.18 12.77); /* AA: the builder's 59.4% is 3.9:1 as text on cards */
+  --danger-foreground: oklch(15% 0.02 12.77); /* AA: white on this lighter red is only 3.3:1; dark text is 5.8:1 */
+  --success: oklch(73.29% 0.1941 138.95);
+  --success-foreground: oklch(21.03% 0.0059 138.95);
+  --warning: oklch(82.03% 0.1392 64.48);
+  --warning-foreground: oklch(21.03% 0.0059 64.48);
 }
 
 html {
@@ -71,6 +123,14 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-vazir), system-ui, sans-serif;
+}
+
+/* Keyboard focus on links gets the same ring colour as HeroUI's controls. In a layer, so a component's own focus classes still win. */
+@layer base {
+  a:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
 }
 
 /* Soft entrance for page content and list rows. Motion only when the user has not asked to reduce it. */

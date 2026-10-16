@@ -1,5 +1,5 @@
 // file: src/app/layout.tsx
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -12,8 +12,17 @@ const vazir = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-  title: t.appName,
+  // Pages set their own title ("تیکت‌ها · تیکتینگ") so browser tabs and history can tell them apart.
+  title: { default: t.appName, template: `%s · ${t.appName}` },
   description: t.appDescription,
+};
+
+// The phone browser bar takes the page background (--background in globals.css). It follows the system theme.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f5f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#050606" },
+  ],
 };
 
 // Runs before the first paint so the page never flashes the wrong theme.

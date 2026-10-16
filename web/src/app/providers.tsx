@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toast } from "@heroui/react";
+import { I18nProvider, Toast } from "@heroui/react";
+import { IconContext } from "@phosphor-icons/react";
 import { ApiError } from "@/lib/api-client";
+
+// Every icon sits next to a text or inside a labelled button, so screen readers should skip it.
+const iconDefaults = { "aria-hidden": true } as const;
 
 function redirectOn401(error: unknown) {
   if (error instanceof ApiError && error.status === 401 && window.location.pathname !== "/login") {
@@ -25,10 +29,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
       }),
   );
 
+  // React Aria (under HeroUI) takes its direction from the browser language unless told otherwise.
+  // Without this, an English browser gets left-to-right toasts and popovers and reversed arrow keys.
   return (
-    <QueryClientProvider client={client}>
-      {children}
-      <Toast.Provider />
-    </QueryClientProvider>
+    <I18nProvider locale="fa-IR">
+      <IconContext.Provider value={iconDefaults}>
+        <QueryClientProvider client={client}>
+          {children}
+          <Toast.Provider />
+        </QueryClientProvider>
+      </IconContext.Provider>
+    </I18nProvider>
   );
 }

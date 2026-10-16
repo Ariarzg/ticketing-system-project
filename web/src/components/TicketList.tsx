@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Avatar, Skeleton } from "@heroui/react";
 import { ATTENTION_STATUSES } from "@/lib/constants";
-import { formatRelative } from "@/lib/dates";
+import { formatDate, formatRelative } from "@/lib/dates";
 import type { TicketDto } from "@/lib/hooks/use-tickets";
 import { initials } from "@/lib/initials";
 import { t } from "@/lib/strings.fa";
@@ -38,31 +38,34 @@ export function TicketList({
           <li key={ticket.id} className="rise" style={{ "--i": Math.min(index, 8) } as React.CSSProperties}>
             <Link
               href={`/tickets/${ticket.id}`}
-              className={`group flex flex-col gap-2 border-s-[3px] px-4 py-3.5 transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent sm:flex-row sm:items-center sm:gap-4 ${
+              className={`group flex flex-col gap-2 border-s-[3px] px-4 py-3.5 transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus sm:flex-row sm:items-center sm:gap-4 ${
                 needsAttention ? "border-s-accent" : "border-s-transparent"
               }`}
             >
               <div className="min-w-0 flex-1">
-                <p dir="auto" className={`truncate ${needsAttention ? "font-bold" : "font-medium"}`}>
-                  {needsAttention && <span className="sr-only">{t.tickets.needsAttention}: </span>}
+                {needsAttention && <span className="sr-only">{t.tickets.needsAttention}: </span>}
+                {/* dir="auto" keeps an English title in its own order; text-right keeps every title on the same side. */}
+                <p dir="auto" className={`truncate text-right ${needsAttention ? "font-bold" : "font-medium"}`}>
                   {ticket.title}
                 </p>
                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
                   {showAuthor && (
                     <span className="inline-flex items-center gap-1.5">
-                      <Avatar size="sm" className="size-5 text-[10px]">
+                      <Avatar size="sm" className="size-6 text-xs">
                         <Avatar.Fallback>{initials(ticket.authorName)}</Avatar.Fallback>
                       </Avatar>
                       {ticket.authorName}
                     </span>
                   )}
                   {showAuthor && <span>{t.department[ticket.department]}</span>}
-                  <time dateTime={ticket.updatedAt}>{formatRelative(ticket.updatedAt)}</time>
+                  <time dateTime={ticket.updatedAt} title={formatDate(ticket.updatedAt)}>
+                    {formatRelative(ticket.updatedAt)}
+                  </time>
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <PriorityChip priority={ticket.priority} />
-                <StatusChip status={ticket.status} />
+                <PriorityChip priority={ticket.priority} withLabel />
+                <StatusChip status={ticket.status} withLabel />
               </div>
             </Link>
           </li>

@@ -15,6 +15,11 @@ export function formatDate(value: string | Date): string {
   return formatter.format(new Date(value));
 }
 
+/** The Jalali date without the time, for things where the hour does not matter (like the day someone joined). */
+export function formatDay(value: string | Date): string {
+  return dayFormatter.format(new Date(value));
+}
+
 /** "۳ ساعت پیش", "دیروز", or a plain Jalali date once it is older than a week. */
 export function formatRelative(value: string | Date): string {
   const date = new Date(value);
