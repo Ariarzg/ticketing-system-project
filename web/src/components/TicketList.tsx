@@ -38,7 +38,7 @@ export function TicketList({
           <li key={ticket.id} className="rise" style={{ "--i": Math.min(index, 8) } as React.CSSProperties}>
             <Link
               href={`/tickets/${ticket.id}`}
-              className={`group flex flex-col gap-2 border-s-[3px] px-4 py-3.5 transition-colors hover:bg-surface-secondary sm:flex-row sm:items-center sm:gap-4 ${
+              className={`group flex flex-col gap-2 border-s-[3px] px-4 py-3.5 transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent sm:flex-row sm:items-center sm:gap-4 ${
                 needsAttention ? "border-s-accent" : "border-s-transparent"
               }`}
             >

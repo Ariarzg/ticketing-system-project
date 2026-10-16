@@ -70,7 +70,7 @@ export default function UsersPage() {
             <li key={u.id} className="rise" style={{ "--i": Math.min(index, 8) } as React.CSSProperties}>
               <Link
                 href={`/users/${u.slug}`}
-                className="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-surface-secondary"
+                className="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
               >
                 <Avatar color="accent" variant="soft">
                   <Avatar.Fallback>{initials(u.name)}</Avatar.Fallback>
