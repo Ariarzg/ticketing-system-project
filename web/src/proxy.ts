@@ -13,6 +13,7 @@ export function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
+// The app icon must load on the login page too, so it skips the redirect like the other static files.
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icon.svg).*)"],
 };
