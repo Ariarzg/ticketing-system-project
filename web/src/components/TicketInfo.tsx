@@ -6,6 +6,7 @@ import type { TicketDto } from "@/lib/hooks/use-tickets";
 import { initials } from "@/lib/initials";
 import { t } from "@/lib/strings.fa";
 import { DepartmentChip, PriorityChip, StatusChip } from "./chips";
+import { StatusControl } from "./StatusControl";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -16,7 +17,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-/** The side panel of a ticket: its facts. (v0.7 adds the status buttons for agents.) */
+/** The side panel of a ticket: its facts, and for agents the status buttons. */
 export function TicketInfo({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
   const isAgent = me.role === "agent";
   return (
@@ -50,6 +51,7 @@ export function TicketInfo({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
           <span className="text-xs">{formatDate(ticket.updatedAt)}</span>
         </Row>
       </dl>
+      {isAgent && <StatusControl ticket={ticket} />}
     </aside>
   );
 }
