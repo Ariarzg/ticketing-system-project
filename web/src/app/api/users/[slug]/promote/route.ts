@@ -1,11 +1,11 @@
 // file: src/app/api/users/[slug]/promote/route.ts
 import { count, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { tickets, users } from '@/db/schema';
+import { organizations, tickets, users } from '@/db/schema';
 import { requireSupervisor } from '@/lib/auth';
 import { HttpError, handle } from '@/lib/http';
 
-/** Supervisor only (D23): turns a client without tickets into an agent. */
+/** Supervisor only (D23): turns a client without tickets into an agent in the default organization. */
 export const POST = handle<{ params: Promise<{ slug: string }> }>(
 	async (_req, ctx) => {
 		await requireSupervisor();
@@ -27,9 +27,15 @@ export const POST = handle<{ params: Promise<{ slug: string }> }>(
 				.where(eq(tickets.userId, target.id));
 			if (n > 0) throw new HttpError(409, 'has_tickets');
 
+			// Staff always belong to the default organization (D24).
+			const [fallback] = await tx
+				.select({ id: organizations.id })
+				.from(organizations)
+				.where(eq(organizations.isDefault, true))
+				.limit(1);
 			await tx
 				.update(users)
-				.set({ role: 'agent' })
+				.set({ role: 'agent', organizationId: fallback.id })
 				.where(eq(users.id, target.id));
 		});
 
