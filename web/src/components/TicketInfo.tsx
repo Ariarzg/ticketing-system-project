@@ -1,4 +1,3 @@
-// file: src/components/TicketInfo.tsx
 import Link from 'next/link';
 import { Avatar } from '@heroui/react';
 import { isStaff } from '@/lib/constants';
@@ -7,9 +6,10 @@ import type { MeUser } from '@/lib/hooks/use-me';
 import type { TicketDto } from '@/lib/hooks/use-tickets';
 import { initials } from '@/lib/initials';
 import { t } from '@/lib/strings.fa';
+import { AssignPanel, AssigneeName } from './AssignPanel';
 import { PriorityChip, StatusChip } from './chips';
-import { StatusControl } from './StatusControl';
 import { OrganizationChip } from './OrganizationChip';
+import { StatusControl } from './StatusControl';
 
 function Row({
 	label,
@@ -31,9 +31,11 @@ export function ticketRef(id: string): string {
 	return `#${id.slice(0, 8).toUpperCase()}`;
 }
 
-/** The side panel of a ticket: its facts, and for staff the status buttons. */
+/** The side panel of a ticket: its facts, for staff the priority, agent and status buttons, and for the supervisor the assign panel. */
 export function TicketInfo({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
 	const staff = isStaff(me.role);
+	const canAssign =
+		me.role === 'supervisor' && !ticket.assigneeId && ticket.status !== 'closed';
 	return (
 		<aside className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4 shadow-[var(--surface-shadow)]">
 			<dl className="divide-y divide-separator">
@@ -48,9 +50,27 @@ export function TicketInfo({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
 				<Row label={t.tickets.colStatus}>
 					<StatusChip status={ticket.status} />
 				</Row>
-				<Row label={t.tickets.colPriority}>
-					<PriorityChip priority={ticket.priority} />
-				</Row>
+				{/* Clients never see the priority or the agent (D26). */}
+				{staff && (
+					<Row label={t.tickets.colPriority}>
+						<PriorityChip priority={ticket.priority} />
+					</Row>
+				)}
+				{staff && (
+					<Row label={t.tickets.colAssignee}>
+						{ticket.assigneeId ?
+							<span
+								dir="auto"
+								className="truncate font-medium"
+							>
+								<AssigneeName
+									id={ticket.assigneeId}
+									me={me}
+								/>
+							</span>
+						:	<span className="text-muted">{t.assign.none}</span>}
+					</Row>
+				)}
 				<Row label={t.tickets.colOrganization}>
 					<OrganizationChip id={ticket.organizationId} />
 				</Row>
@@ -85,6 +105,7 @@ export function TicketInfo({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
 				</Row>
 				<Row label={t.tickets.colUpdated}>{formatDate(ticket.updatedAt)}</Row>
 			</dl>
+			{canAssign && <AssignPanel ticketId={ticket.id} />}
 			{staff && <StatusControl ticket={ticket} />}
 		</aside>
 	);

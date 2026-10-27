@@ -50,13 +50,28 @@ export function StatusChip({
 	);
 }
 
+/** A null priority is one the supervisor has not set yet (D26). Clients never get this chip. */
 export function PriorityChip({
 	priority,
 	withLabel = false,
 }: {
-	priority: Priority;
+	priority: Priority | null;
 	withLabel?: boolean;
 }) {
+	if (priority === null) {
+		return (
+			<Chip
+				size="sm"
+				color="default"
+				variant="soft"
+			>
+				{withLabel && (
+					<span className="sr-only">{t.tickets.colPriority}: </span>
+				)}
+				{t.priority.unset}
+			</Chip>
+		);
+	}
 	const Icon = priorityIcon[priority];
 	return (
 		<Chip

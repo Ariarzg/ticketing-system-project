@@ -1,9 +1,9 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { tickets } from '@/db/schema';
 import { requireStaff } from '@/lib/auth';
 import { HttpError, handle, uuidParam } from '@/lib/http';
-import { nextStatusOrHttpError } from '@/lib/tickets';
+import { nextStatusOrHttpError, ticketScope } from '@/lib/tickets';
 import { statusSchema } from '@/lib/validation/tickets';
 
 export const PATCH = handle<{ params: Promise<{ id: string }> }>(
@@ -16,7 +16,8 @@ export const PATCH = handle<{ params: Promise<{ id: string }> }>(
 			const [ticket] = await tx
 				.select({ status: tickets.status })
 				.from(tickets)
-				.where(eq(tickets.id, id))
+				// An agent only touches their own tickets (D25).
+				.where(and(eq(tickets.id, id), ticketScope(user)))
 				.limit(1)
 				.for('update');
 			if (!ticket) throw new HttpError(404, 'not_found');

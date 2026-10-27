@@ -43,6 +43,13 @@
       "when": 1793098049793,
       "tag": "0005_staff_in_default_organization",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793100699712,
+      "tag": "0006_classy_shriek",
+      "breakpoints": true
     }
   ]
 }

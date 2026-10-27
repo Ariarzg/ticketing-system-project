@@ -8,9 +8,12 @@ export type TicketDto = {
 	id: string;
 	title: string;
 	description: string;
-	priority: Priority;
+	/** Null until the supervisor sets it, and always null for clients (D26). */
+	priority: Priority | null;
 	status: Status;
 	organizationId: string;
+	/** The assigned agent; null until assigned, and always null for clients. */
+	assigneeId: string | null;
 	createdAt: string;
 	updatedAt: string;
 	authorId: string;
@@ -25,6 +28,7 @@ export type TicketsResponse = {
 	pageSize?: number;
 	statusCounts?: Record<Status, number>;
 	attentionCount?: number;
+	unassignedCount?: number;
 };
 
 /** `search` is the raw query string, e.g. "status=open&page=2". */

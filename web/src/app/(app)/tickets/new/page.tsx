@@ -7,14 +7,10 @@ import { Button, Description, FieldError, Input, Label, TextArea, TextField, toa
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
-import { SelectField } from "@/components/SelectField";
 import { api } from "@/lib/api-client";
-import { PRIORITIES, type Priority } from "@/lib/constants";
 import { errorMessage } from "@/lib/errors";
 import { useMe } from "@/lib/hooks/use-me";
 import { t } from "@/lib/strings.fa";
-
-const priorityOptions = PRIORITIES.map((id) => ({ id, label: t.priority[id] }));
 
 // The same limits as createTicketSchema in lib/validation/tickets.ts.
 const TITLE_MAX = 120;
@@ -31,20 +27,16 @@ export default function NewTicketPage() {
   const { data: me } = useMe();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState<string | null>("medium");
   const [discarding, setDiscarding] = useState(false);
 
-  // Only clients create tickets; agents are sent back to the list.
+  // Only clients create tickets; staff are sent back to the list.
   useEffect(() => {
     if (me && me.role !== "client") router.replace("/tickets");
   }, [me, router]);
 
   const create = useMutation({
-    mutationFn: () =>
-      api<{ id: string }>("/api/tickets", {
-        method: "POST",
-        json: { title, description, priority: priority as Priority },
-      }),
+    // No priority: the supervisor sets it when assigning the ticket (D26).
+    mutationFn: () => api<{ id: string }>("/api/tickets", { method: "POST", json: { title, description } }),
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ["tickets"] });
       toast.success(t.tickets.created);
@@ -104,13 +96,6 @@ export default function NewTicketPage() {
           </Description>
           <FieldError />
         </TextField>
-        <SelectField
-          label={t.tickets.fieldPriority}
-          value={priority}
-          options={priorityOptions}
-          onChange={setPriority}
-          className="sm:w-56"
-        />
         <div className="flex items-center justify-end gap-2 border-t border-separator pt-5">
           <Button variant="tertiary" onPress={() => (dirty ? setDiscarding(true) : router.push("/tickets"))}>
             {t.common.cancel}

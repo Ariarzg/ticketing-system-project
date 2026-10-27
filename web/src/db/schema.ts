@@ -56,11 +56,14 @@ export const tickets = pgTable(
 			.references(() => users.id, { onDelete: 'cascade' }),
 		title: text('title').notNull(),
 		description: text('description').notNull(),
-		priority: priorityEnum('priority').notNull(),
+		// Null until the supervisor sets it while assigning the ticket ("not specified yet", D26).
+		priority: priorityEnum('priority'),
 		status: statusEnum('status').notNull().default('open'),
 		organizationId: uuid('organization_id')
 			.notNull()
 			.references(() => organizations.id),
+		// The agent the supervisor assigned; null until then (D25).
+		assigneeId: uuid('assignee_id').references(() => users.id),
 		createdAt: timestamp('created_at', { withTimezone: true })
 			.notNull()
 			.defaultNow(),
@@ -73,6 +76,7 @@ export const tickets = pgTable(
 		index('tickets_status_idx').on(table.status),
 		index('tickets_updated_at_idx').on(table.updatedAt),
 		index('tickets_organization_id_idx').on(table.organizationId),
+		index('tickets_assignee_id_idx').on(table.assigneeId),
 	],
 );
 

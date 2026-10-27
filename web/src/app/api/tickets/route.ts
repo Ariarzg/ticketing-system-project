@@ -1,4 +1,14 @@
-import { and, count, desc, eq, ilike, inArray, or } from 'drizzle-orm';
+import {
+	and,
+	count,
+	desc,
+	eq,
+	ilike,
+	inArray,
+	isNull,
+	ne,
+	or,
+} from 'drizzle-orm';
 import { db } from '@/db';
 import { tickets, users } from '@/db/schema';
 import { requireUser } from '@/lib/auth';
@@ -10,7 +20,7 @@ import {
 } from '@/lib/constants';
 import { HttpError, handle } from '@/lib/http';
 import { likePattern } from '@/lib/search';
-import { ticketColumns, ticketScope } from '@/lib/tickets';
+import { forViewer, ticketColumns, ticketScope } from '@/lib/tickets';
 import { createTicketSchema, listQuerySchema } from '@/lib/validation/tickets';
 
 export const GET = handle(async (req) => {
@@ -19,6 +29,7 @@ export const GET = handle(async (req) => {
 		Object.fromEntries(new URL(req.url).searchParams),
 	);
 	const staff = isStaff(user.role);
+	const supervisor = user.role === 'supervisor';
 
 	const search =
 		query.q ?
@@ -29,53 +40,60 @@ export const GET = handle(async (req) => {
 				)
 			:	ilike(tickets.title, likePattern(query.q))
 		:	undefined;
-
-	const where = and(
-		ticketScope(user), // D10 layer 3 is always applied
-		query.status ? eq(tickets.status, query.status) : undefined,
-		query.priority ? eq(tickets.priority, query.priority) : undefined,
+	// Clients never see the priority, so they cannot filter by it either (D26).
+	const priority =
+		staff && query.priority ? eq(tickets.priority, query.priority) : undefined;
+	const organization =
 		query.organization ?
 			eq(tickets.organizationId, query.organization)
-		:	undefined,
+		:	undefined;
+	// "Agents needed": no agent yet and not closed (D25).
+	const unassigned = and(
+		isNull(tickets.assigneeId),
+		ne(tickets.status, 'closed'),
+	);
+
+	// What every list and count here shares: D10 layer 3 is always applied.
+	const base = and(ticketScope(user), priority, organization, search);
+	const where = and(
+		base,
+		query.status ? eq(tickets.status, query.status) : undefined,
 		query.attention ?
 			inArray(tickets.status, [...ATTENTION_STATUSES])
 		:	undefined,
-		search,
+		supervisor && query.unassigned ? unassigned : undefined,
 	);
 
-	const [items, [{ total }]] = await Promise.all([
-		db
-			.select(ticketColumns)
-			.from(tickets)
-			.innerJoin(users, eq(tickets.userId, users.id))
-			.where(where)
-			.orderBy(desc(tickets.updatedAt), desc(tickets.id))
-			.limit(PAGE_SIZE)
-			.offset((query.page - 1) * PAGE_SIZE),
-		db
-			.select({ total: count() })
-			.from(tickets)
-			.innerJoin(users, eq(tickets.userId, users.id))
-			.where(where),
-	]);
+	const [items, [{ total }], countRows, [{ unassignedCount }]] =
+		await Promise.all([
+			db
+				.select(ticketColumns)
+				.from(tickets)
+				.innerJoin(users, eq(tickets.userId, users.id))
+				.where(where)
+				.orderBy(desc(tickets.updatedAt), desc(tickets.id))
+				.limit(PAGE_SIZE)
+				.offset((query.page - 1) * PAGE_SIZE),
+			db
+				.select({ total: count() })
+				.from(tickets)
+				.innerJoin(users, eq(tickets.userId, users.id))
+				.where(where),
+			// Counts per status for the tabs. They follow the search, priority and organization, but not the view,
+			// so each tab says how many rows it would show and "all" matches the list under it.
+			db
+				.select({ status: tickets.status, n: count() })
+				.from(tickets)
+				.innerJoin(users, eq(tickets.userId, users.id))
+				.where(base)
+				.groupBy(tickets.status),
+			db
+				.select({ unassignedCount: count() })
+				.from(tickets)
+				.innerJoin(users, eq(tickets.userId, users.id))
+				.where(and(base, unassigned)),
+		]);
 
-	// Counts per status for the tabs. They follow the search, priority and department, but not the status tab itself,
-	// so each tab says how many rows it would show and "all" matches the list under it.
-	const countRows = await db
-		.select({ status: tickets.status, n: count() })
-		.from(tickets)
-		.innerJoin(users, eq(tickets.userId, users.id))
-		.where(
-			and(
-				ticketScope(user),
-				query.priority ? eq(tickets.priority, query.priority) : undefined,
-				query.organization ?
-					eq(tickets.organizationId, query.organization)
-				:	undefined,
-				search,
-			),
-		)
-		.groupBy(tickets.status);
 	const statusCounts = Object.fromEntries(
 		STATUSES.map((s) => [s, 0]),
 	) as Record<(typeof STATUSES)[number], number>;
@@ -86,12 +104,13 @@ export const GET = handle(async (req) => {
 	);
 
 	return Response.json({
-		items,
+		items: items.map((row) => forViewer(user, row)),
 		total,
 		page: query.page,
 		pageSize: PAGE_SIZE,
 		statusCounts,
 		attentionCount,
+		unassignedCount: supervisor ? unassignedCount : undefined,
 	});
 });
 
@@ -107,8 +126,8 @@ export const POST = handle(async (req) => {
 			userId: user.id,
 			title: input.title,
 			description: input.description,
-			priority: input.priority,
-			organizationId: user.organizationId, // D7: copied from the user
+			// No priority: the supervisor sets it when assigning the ticket (D26).
+			organizationId: user.organizationId, // D7, D24: copied from the author
 		})
 		.returning({ id: tickets.id });
 

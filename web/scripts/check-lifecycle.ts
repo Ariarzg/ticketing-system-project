@@ -35,8 +35,8 @@ const cases: Case[] = [
 	['closed', reply, 'agent', 'ticket_closed'],
 	['closed', reply, 'client', 'ticket_closed'],
 	['closed', set('in_progress'), 'agent', 'ticket_closed'],
-	// A supervisor follows the agent's rules (D23).
-	['open', reply, 'supervisor', 'answered'],
+	// The supervisor changes status like an agent but never replies (D23, D25).
+	['open', reply, 'supervisor', 'forbidden'],
 	['answered', set('in_progress'), 'supervisor', 'in_progress'],
 	['open', set('closed'), 'supervisor', 'closed'],
 	['closed', reply, 'supervisor', 'ticket_closed'],

@@ -1,4 +1,3 @@
-// file: src/app/api/users/route.ts
 import { and, asc, desc, eq, ilike, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db';
@@ -10,7 +9,7 @@ import { likePattern } from '@/lib/search';
 const querySchema = z.object({ q: z.string().trim().max(100).optional() });
 
 export const GET = handle(async (req) => {
-	await requireStaff();
+	const me = await requireStaff();
 	const { q } = querySchema.parse(
 		Object.fromEntries(new URL(req.url).searchParams),
 	);
@@ -18,6 +17,9 @@ export const GET = handle(async (req) => {
 		sql<number>`count(${tickets.id}) filter (where ${tickets.status} <> 'closed')`.mapWith(
 			Number,
 		);
+	// An agent only counts, and only lists, clients whose tickets are assigned to them (D25).
+	const agent = me.role === 'agent';
+	const mine = agent ? eq(tickets.assigneeId, me.id) : undefined;
 
 	const items = await db
 		.select({
@@ -30,7 +32,7 @@ export const GET = handle(async (req) => {
 			openTickets,
 		})
 		.from(users)
-		.leftJoin(tickets, eq(tickets.userId, users.id))
+		.leftJoin(tickets, and(eq(tickets.userId, users.id), mine))
 		.where(
 			and(
 				eq(users.role, 'client'),
@@ -38,6 +40,7 @@ export const GET = handle(async (req) => {
 			),
 		)
 		.groupBy(users.id)
+		.having(agent ? sql`count(${tickets.id}) > 0` : undefined)
 		// Staff look for whoever is waiting most, so the busiest users come first.
 		.orderBy(desc(openTickets), asc(users.name))
 		.limit(200);

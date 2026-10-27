@@ -15,7 +15,7 @@ export class TransitionError extends Error {
 	}
 }
 
-/** Statuses an agent may set by hand. "open" is only the starting status. */
+/** Statuses staff (agents and supervisors) may set by hand. "open" is only the starting status. */
 const STAFF_TARGETS: Status[] = ['in_progress', 'answered', 'closed'];
 
 export function transition(
@@ -26,7 +26,9 @@ export function transition(
 	if (current === 'closed') throw new TransitionError('ticket_closed');
 
 	if (action.type === 'reply') {
-		return isStaff(role) ? 'answered' : 'in_progress';
+		// The supervisor assigns and supervises; only the client and the assigned agent write (D25).
+		if (role === 'supervisor') throw new TransitionError('forbidden');
+		return role === 'agent' ? 'answered' : 'in_progress';
 	}
 
 	if (!isStaff(role)) throw new TransitionError('forbidden');

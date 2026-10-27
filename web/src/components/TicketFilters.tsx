@@ -12,20 +12,30 @@ const priorityOptions = [
 	...PRIORITIES.map((id) => ({ id, label: t.priority[id] })),
 ];
 
+/** The views besides the status tabs. Each is its own URL flag (?attention=1, ?unassigned=1); only one is on at a time. */
+const VIEW_FLAGS = ['attention', 'unassigned'] as const;
+const isViewFlag = (key: string) =>
+	(VIEW_FLAGS as readonly string[]).includes(key);
+
 export function TicketFilters({
 	params,
 	setParams,
 	isAgent,
+	isSupervisor,
 	statusCounts,
 	attentionCount,
+	unassignedCount,
 }: {
 	params: URLSearchParams;
 	/** Changes several URL parameters in one navigation. A null value removes the parameter. */
 	setParams: (updates: Record<string, string | null>) => void;
+	/** True for all staff (agents and the supervisor). */
 	isAgent: boolean;
+	isSupervisor: boolean;
 	/** Undefined while the list loads, so the tabs show no number instead of a false zero. */
 	statusCounts?: Record<Status, number>;
 	attentionCount?: number;
+	unassignedCount?: number;
 }) {
 	const { data: organizations } = useOrganizations();
 	const organizationOptions = [
@@ -33,9 +43,9 @@ export function TicketFilters({
 		...(organizations ?? []).map((o) => ({ id: o.id, label: o.name })),
 	];
 	const view =
-		params.get('attention') === '1' ?
-			'attention'
-		:	(params.get('status') ?? 'all');
+		VIEW_FLAGS.find((flag) => params.get(flag) === '1') ??
+		params.get('status') ??
+		'all';
 	const total =
 		statusCounts ?
 			STATUSES.reduce((sum, s) => sum + statusCounts[s], 0)
@@ -43,15 +53,26 @@ export function TicketFilters({
 	const pick = (key: string) => (value: string) =>
 		setParams({ [key]: value === 'all' ? null : value });
 
-	// The tabs set either ?status=... or ?attention=1, never both.
+	// A view flag clears the status and the other flags; a status tab clears every flag.
 	function selectView(key: string) {
 		setParams({
-			attention: key === 'attention' ? '1' : null,
-			status: key === 'attention' || key === 'all' ? null : key,
+			...Object.fromEntries(
+				VIEW_FLAGS.map((flag) => [flag, flag === key ? '1' : null]),
+			),
+			status: isViewFlag(key) || key === 'all' ? null : key,
 		});
 	}
 
 	const tabs: { id: string; label: string; count?: number }[] = [
+		...(isSupervisor ?
+			[
+				{
+					id: 'unassigned',
+					label: t.filters.unassigned,
+					count: unassignedCount,
+				},
+			]
+		:	[]),
 		...(isAgent ?
 			[{ id: 'attention', label: t.filters.attention, count: attentionCount }]
 		:	[]),
@@ -118,14 +139,17 @@ export function TicketFilters({
 						:	t.filters.searchClientPlaceholder
 					}
 				/>
-				<SelectField
-					hideLabel
-					className="min-w-36 flex-1 sm:w-44 sm:flex-none"
-					label={t.tickets.colPriority}
-					value={params.get('priority') ?? 'all'}
-					options={priorityOptions}
-					onChange={pick('priority')}
-				/>
+				{/* Clients never see the priority, so they get no priority filter (D26). */}
+				{isAgent && (
+					<SelectField
+						hideLabel
+						className="min-w-36 flex-1 sm:w-44 sm:flex-none"
+						label={t.tickets.colPriority}
+						value={params.get('priority') ?? 'all'}
+						options={priorityOptions}
+						onChange={pick('priority')}
+					/>
+				)}
 				{isAgent && (
 					<SelectField
 						hideLabel

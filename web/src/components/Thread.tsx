@@ -103,6 +103,9 @@ export function Thread({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
             <LockSimpleIcon size={18} />
             {t.thread.closedNotice}
           </p>
+        ) : me.role === "supervisor" ? (
+          // The supervisor assigns and supervises but never writes to the client (D25).
+          <p className="text-sm text-muted">{t.thread.supervisorNotice}</p>
         ) : (
           <form
             onSubmit={(e) => {

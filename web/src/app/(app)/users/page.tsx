@@ -58,7 +58,7 @@ function UsersView() {
 		<div className="flex flex-col gap-5">
 			<PageHeader
 				title={t.users.title}
-				description={t.users.hint}
+				description={me?.role === 'agent' ? t.users.agentHint : t.users.hint}
 			/>
 			<SearchBox
 				className="w-full sm:w-80"

@@ -18,11 +18,14 @@ import { OrganizationName } from './OrganizationChip';
 export function TicketList({
 	tickets,
 	showAuthor = false,
+	showPriority = false,
 	highlightAttention = false,
 	empty,
 }: {
 	tickets: TicketDto[];
 	showAuthor?: boolean;
+	/** Staff only: clients never see the priority (D26). */
+	showPriority?: boolean;
 	highlightAttention?: boolean;
 	empty?: React.ReactNode;
 }) {
@@ -89,10 +92,12 @@ export function TicketList({
 								</div>
 							</div>
 							<div className="flex shrink-0 items-center gap-2">
-								<PriorityChip
-									priority={ticket.priority}
-									withLabel
-								/>
+								{showPriority && (
+									<PriorityChip
+										priority={ticket.priority}
+										withLabel
+									/>
+								)}
 								<StatusChip
 									status={ticket.status}
 									withLabel

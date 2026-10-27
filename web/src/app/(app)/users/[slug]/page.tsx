@@ -147,6 +147,7 @@ export default function UserProfilePage() {
 						<h2 className="text-lg font-bold">{t.users.ticketsOfUser}</h2>
 						<TicketList
 							tickets={tickets}
+							showPriority={isStaff(me.role)}
 							highlightAttention={isStaff(me.role)}
 							empty={
 								<EmptyBox

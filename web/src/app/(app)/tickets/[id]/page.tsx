@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Skeleton, toast } from '@heroui/react';
 import { ArrowRightIcon } from '@phosphor-icons/react';
-import { PriorityChip, StatusChip } from '@/components/chips';
+import { StatusChip } from '@/components/chips';
 import { Thread } from '@/components/Thread';
 import { TicketInfo } from '@/components/TicketInfo';
 import { ApiError } from '@/lib/api-client';
@@ -72,12 +72,9 @@ export default function TicketPage() {
 				{/* Clients read the conversation first on a phone, so the facts panel moves below it; this line keeps the status in view. */}
 				{!staff && (
 					<div className="mt-2 flex items-center gap-2 lg:hidden">
+						{/* No priority: clients never see it (D26). */}
 						<StatusChip
 							status={ticket.status}
-							withLabel
-						/>
-						<PriorityChip
-							priority={ticket.priority}
 							withLabel
 						/>
 					</div>

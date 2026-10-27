@@ -36,12 +36,15 @@ function TicketsView() {
 		searchParams.toString(),
 	);
 	const staff = !!me && isStaff(me.role);
+	const supervisor = me?.role === 'supervisor';
+	const agent = me?.role === 'agent';
 	const isFiltered = [
 		'status',
 		'priority',
 		'organization',
 		'q',
 		'attention',
+		'unassigned',
 	].some((k) => searchParams.has(k));
 
 	/** Updates several URL parameters in one navigation. A new filter always starts at page 1. */
@@ -78,8 +81,16 @@ function TicketsView() {
 	return (
 		<div className="flex flex-col gap-5">
 			<PageHeader
-				title={staff ? t.tickets.allTitle : t.tickets.myTitle}
-				description={staff ? t.tickets.allHint : t.tickets.myHint}
+				title={
+					supervisor ? t.tickets.allTitle
+					: agent ? t.tickets.assignedTitle
+					: t.tickets.myTitle
+				}
+				description={
+					supervisor ? t.tickets.allHint
+					: agent ? t.tickets.assignedHint
+					: t.tickets.myHint
+				}
 				actions={newTicketButton}
 			/>
 
@@ -88,8 +99,10 @@ function TicketsView() {
 					params={new URLSearchParams(searchParams.toString())}
 					setParams={setParams}
 					isAgent={staff}
+					isSupervisor={supervisor}
 					statusCounts={data?.statusCounts}
 					attentionCount={data?.attentionCount}
+					unassignedCount={data?.unassignedCount}
 				/>
 			)}
 
@@ -104,6 +117,7 @@ function TicketsView() {
 					<TicketList
 						tickets={data.items}
 						showAuthor={staff}
+						showPriority={staff}
 						highlightAttention={staff}
 						empty={
 							isFiltered ?
@@ -125,9 +139,9 @@ function TicketsView() {
 									icon={<TicketIcon size={24} />}
 									title={t.tickets.empty}
 									hint={
-										me?.role === 'client' ?
-											t.tickets.emptyClientHint
-										:	t.tickets.emptyAgentHint
+										me?.role === 'client' ? t.tickets.emptyClientHint
+										: agent ? t.tickets.emptyAssignedHint
+										: t.tickets.emptyAgentHint
 									}
 									action={
 										me?.role === 'client' ?
