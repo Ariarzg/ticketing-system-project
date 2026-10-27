@@ -3,7 +3,7 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api } from '../api-client';
-import type { Department, Role, Status } from '../constants';
+import type { Role, Status } from '../constants';
 import type { TicketDto } from './use-tickets';
 
 export type UserRow = {
@@ -11,7 +11,7 @@ export type UserRow = {
 	slug: string;
 	name: string;
 	email: string;
-	department: Department;
+	organizationId: string;
 	createdAt: string;
 	openTickets: number;
 };
@@ -25,7 +25,7 @@ export type UserProfile = {
 		name: string;
 		email: string;
 		role: Role;
-		department: Department;
+		organizationId: string;
 		createdAt: string;
 	};
 	stats: Record<Status, number> & { total: number };

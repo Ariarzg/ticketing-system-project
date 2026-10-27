@@ -24,7 +24,6 @@ export const t = {
 		closed: 'بسته شده',
 	},
 	priority: { low: 'کم', medium: 'متوسط', high: 'زیاد' },
-	department: { technical: 'فنی', billing: 'مالی', general: 'عمومی' },
 	role: { client: 'کاربر', agent: 'پشتیبان', supervisor: 'سرپرست' },
 
 	nav: {
@@ -36,6 +35,7 @@ export const t = {
 		newTicket: 'تیکت جدید',
 		users: 'کاربران',
 		agents: 'پشتیبان‌ها',
+		organizations: 'سازمان‌ها',
 		myProfile: 'پروفایل من',
 	},
 
@@ -55,9 +55,9 @@ export const t = {
 		emailInvalid: 'ایمیل معتبر نیست؛ مثلاً name@example.com',
 		passwordRequired: 'رمز عبور را وارد کنید.',
 		passwordTooShort: 'رمز عبور باید حداقل ۸ کاراکتر باشد.',
-		department: 'دپارتمان',
-		departmentPlaceholder: 'یک دپارتمان انتخاب کنید',
-		departmentRequired: 'لطفاً دپارتمان را انتخاب کنید.',
+		organization: 'سازمان',
+		organizationPlaceholder: 'سازمان خود را انتخاب کنید',
+		organizationRequired: 'لطفاً سازمان خود را انتخاب کنید.',
 		loginButton: 'ورود',
 		signupButton: 'ایجاد حساب',
 		haveAccount: 'قبلاً ثبت‌نام کرده‌اید؟',
@@ -107,7 +107,7 @@ export const t = {
 		colPriority: 'اولویت',
 		colAuthor: 'ثبت‌کننده',
 		reference: 'شناسه',
-		colDepartment: 'دپارتمان',
+		colOrganization: 'سازمان',
 		colUpdated: 'آخرین به‌روزرسانی',
 		createdAtLabel: 'تاریخ ثبت',
 		needsAttention: 'نیازمند پاسخ',
@@ -133,7 +133,7 @@ export const t = {
 	filters: {
 		all: 'همه',
 		allPriorities: 'همه اولویت‌ها',
-		allDepartments: 'همه دپارتمان‌ها',
+		allOrganizations: 'همه سازمان‌ها',
 		viewLabel: 'نمای تیکت‌ها',
 		search: 'جستجو',
 		clearSearch: 'پاک کردن جستجو',
@@ -152,7 +152,7 @@ export const t = {
 		searchPlaceholder: 'جستجوی نام کاربر',
 		colName: 'نام',
 		colEmail: 'ایمیل',
-		colDepartment: 'دپارتمان',
+		colOrganization: 'سازمان',
 		colOpen: 'تیکت باز',
 		empty: 'کاربری پیدا نشد',
 		back: 'بازگشت به کاربران',
@@ -178,6 +178,33 @@ export const t = {
 		back: 'بازگشت به پشتیبان‌ها',
 	},
 
+	organizations: {
+		title: 'سازمان‌ها',
+		hint: 'کاربران هنگام ثبت‌نام یکی از این سازمان‌ها را انتخاب می‌کنند. سازمان پیش‌فرض حذف نمی‌شود.',
+		new: 'سازمان جدید',
+		newTitle: 'افزودن سازمان',
+		newHint:
+			'از این پس کاربران می‌توانند هنگام ثبت‌نام این سازمان را انتخاب کنند.',
+		editTitle: 'ویرایش سازمان',
+		name: 'نام سازمان',
+		namePlaceholder: 'مثلاً: شرکت نمونه',
+		nameTooShort: 'نام سازمان باید حداقل ۲ کاراکتر باشد.',
+		create: 'افزودن سازمان',
+		save: 'ذخیره',
+		created: 'سازمان افزوده شد.',
+		saved: 'تغییرات ذخیره شد.',
+		edit: 'ویرایش',
+		delete: 'حذف سازمان',
+		deleteTitle: 'این سازمان حذف شود؟',
+		deleteText:
+			'کاربران و تیکت‌های این سازمان به سازمان پیش‌فرض منتقل می‌شوند. این کار برگشت‌پذیر نیست.',
+		deleted: 'سازمان حذف شد و کاربرانش به سازمان پیش‌فرض منتقل شدند.',
+		default: 'پیش‌فرض',
+		createdLabel: 'ایجاد',
+		notFound: 'سازمان پیدا نشد.',
+		empty: 'سازمانی وجود ندارد',
+	},
+
 	// Keys that match the error codes the API returns ("error" field of the JSON).
 	errors: {
 		server: 'مشکلی پیش آمد. دوباره تلاش کنید.',
@@ -197,5 +224,7 @@ export const t = {
 		backHome: 'بازگشت به تیکت‌ها',
 		not_a_client: 'فقط کاربران عادی را می‌توان به پشتیبان ارتقا داد.',
 		has_tickets: 'کاربری که تیکت ثبت کرده است نمی‌تواند پشتیبان شود.',
+		org_name_taken: 'سازمانی با این نام وجود دارد.',
+		org_is_default: 'سازمان پیش‌فرض را نمی‌توان حذف کرد.',
 	},
 } as const;

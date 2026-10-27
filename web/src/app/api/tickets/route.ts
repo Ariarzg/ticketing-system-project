@@ -34,7 +34,9 @@ export const GET = handle(async (req) => {
 		ticketScope(user), // D10 layer 3 is always applied
 		query.status ? eq(tickets.status, query.status) : undefined,
 		query.priority ? eq(tickets.priority, query.priority) : undefined,
-		query.department ? eq(tickets.department, query.department) : undefined,
+		query.organization ?
+			eq(tickets.organizationId, query.organization)
+		:	undefined,
 		query.attention ?
 			inArray(tickets.status, [...ATTENTION_STATUSES])
 		:	undefined,
@@ -67,7 +69,9 @@ export const GET = handle(async (req) => {
 			and(
 				ticketScope(user),
 				query.priority ? eq(tickets.priority, query.priority) : undefined,
-				query.department ? eq(tickets.department, query.department) : undefined,
+				query.organization ?
+					eq(tickets.organizationId, query.organization)
+				:	undefined,
 				search,
 			),
 		)
@@ -104,7 +108,7 @@ export const POST = handle(async (req) => {
 			title: input.title,
 			description: input.description,
 			priority: input.priority,
-			department: user.department, // D7: copied from the user
+			organizationId: user.organizationId, // D7: copied from the user
 		})
 		.returning({ id: tickets.id });
 

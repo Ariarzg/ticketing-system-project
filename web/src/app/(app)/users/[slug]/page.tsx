@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Avatar, Skeleton, toast } from '@heroui/react';
 import { ArrowRightIcon, TicketIcon } from '@phosphor-icons/react';
-import { DepartmentChip } from '@/components/chips';
 import { EmptyBox } from '@/components/EmptyBox';
 import { PromoteButton } from '@/components/PromoteButton';
 import { TicketList } from '@/components/TicketList';
@@ -17,6 +16,7 @@ import { useMe } from '@/lib/hooks/use-me';
 import { useUserProfile } from '@/lib/hooks/use-users';
 import { initials } from '@/lib/initials';
 import { t } from '@/lib/strings.fa';
+import { OrganizationChip } from '@/components/OrganizationChip';
 
 export default function UserProfilePage() {
 	const { slug } = useParams<{ slug: string }>();
@@ -100,7 +100,7 @@ export default function UserProfilePage() {
 						>
 							{user.email}
 						</span>
-						<DepartmentChip department={user.department} />
+						<OrganizationChip id={user.organizationId} />
 						<span>{t.role[user.role]}</span>
 						<span>
 							{t.users.joined}: {formatDay(user.createdAt)}

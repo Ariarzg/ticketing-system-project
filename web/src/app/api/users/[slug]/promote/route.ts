@@ -2,14 +2,13 @@
 import { count, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { tickets, users } from '@/db/schema';
-import { requireUser } from '@/lib/auth';
+import { requireSupervisor } from '@/lib/auth';
 import { HttpError, handle } from '@/lib/http';
 
 /** Supervisor only (D23): turns a client without tickets into an agent. */
 export const POST = handle<{ params: Promise<{ slug: string }> }>(
 	async (_req, ctx) => {
-		const me = await requireUser();
-		if (me.role !== 'supervisor') throw new HttpError(403, 'forbidden');
+		await requireSupervisor();
 		const { slug } = await ctx.params;
 
 		await db.transaction(async (tx) => {

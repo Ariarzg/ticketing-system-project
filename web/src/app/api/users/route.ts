@@ -25,7 +25,7 @@ export const GET = handle(async (req) => {
 			slug: users.slug,
 			name: users.name,
 			email: users.email,
-			department: users.department,
+			organizationId: users.organizationId,
 			createdAt: users.createdAt,
 			openTickets,
 		})

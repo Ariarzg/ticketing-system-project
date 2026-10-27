@@ -19,7 +19,7 @@ export const GET = handle<{ params: Promise<{ slug: string }> }>(
 				name: users.name,
 				email: users.email,
 				role: users.role,
-				department: users.department,
+				organizationId: users.organizationId,
 				createdAt: users.createdAt,
 			})
 			.from(users)

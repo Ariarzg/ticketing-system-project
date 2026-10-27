@@ -13,7 +13,7 @@ export const ticketColumns = {
 	description: tickets.description,
 	priority: tickets.priority,
 	status: tickets.status,
-	department: tickets.department,
+	organizationId: tickets.organizationId,
 	createdAt: tickets.createdAt,
 	updatedAt: tickets.updatedAt,
 	authorId: tickets.userId,

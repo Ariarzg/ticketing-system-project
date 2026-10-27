@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+	BuildingsIcon,
 	HeadsetIcon,
 	PlusCircleIcon,
 	TicketIcon,
@@ -60,6 +61,13 @@ export function NavLinks({
 					label: t.nav.agents,
 					icon: HeadsetIcon,
 					match: (p: string) => p === '/agents',
+				},
+				{
+					href: '/organizations',
+					label: t.nav.organizations,
+					icon: BuildingsIcon,
+					match: (p: string) =>
+						p === '/organizations' || p.startsWith('/organizations/'),
 				},
 			]
 		:	[]),

@@ -7,8 +7,9 @@ import type { MeUser } from '@/lib/hooks/use-me';
 import type { TicketDto } from '@/lib/hooks/use-tickets';
 import { initials } from '@/lib/initials';
 import { t } from '@/lib/strings.fa';
-import { DepartmentChip, PriorityChip, StatusChip } from './chips';
+import { PriorityChip, StatusChip } from './chips';
 import { StatusControl } from './StatusControl';
+import { OrganizationChip } from './OrganizationChip';
 
 function Row({
 	label,
@@ -50,8 +51,8 @@ export function TicketInfo({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
 				<Row label={t.tickets.colPriority}>
 					<PriorityChip priority={ticket.priority} />
 				</Row>
-				<Row label={t.tickets.colDepartment}>
-					<DepartmentChip department={ticket.department} />
+				<Row label={t.tickets.colOrganization}>
+					<OrganizationChip id={ticket.organizationId} />
 				</Row>
 				{/* A client does not need to be told that they wrote their own ticket. */}
 				{ticket.authorId !== me.id && (

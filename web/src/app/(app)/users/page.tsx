@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Avatar, Skeleton, toast } from '@heroui/react';
 import { UsersThreeIcon } from '@phosphor-icons/react';
-import { DepartmentChip } from '@/components/chips';
 import { EmptyBox } from '@/components/EmptyBox';
 import { PageHeader } from '@/components/PageHeader';
 import { SearchBox } from '@/components/SearchBox';
@@ -15,6 +14,7 @@ import { useMe } from '@/lib/hooks/use-me';
 import { useUsers } from '@/lib/hooks/use-users';
 import { initials } from '@/lib/initials';
 import { t } from '@/lib/strings.fa';
+import { OrganizationChip } from '@/components/OrganizationChip';
 
 export default function UsersPage() {
 	// useSearchParams needs a Suspense boundary.
@@ -102,7 +102,7 @@ function UsersView() {
 						className="hidden items-center gap-4 px-4 text-xs font-medium text-muted sm:flex"
 					>
 						<span className="flex-1">{t.users.colName}</span>
-						<span className="w-24">{t.users.colDepartment}</span>
+						<span className="w-40">{t.users.colOrganization}</span>
 						<span className="w-20 text-end">{t.users.colOpen}</span>
 					</div>
 					<ul className="divide-y divide-separator overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--surface-shadow)]">
@@ -137,11 +137,11 @@ function UsersView() {
 											{u.email}
 										</p>
 										<div className="mt-1.5 sm:hidden">
-											<DepartmentChip department={u.department} />
+											<OrganizationChip id={u.organizationId} />
 										</div>
 									</div>
-									<div className="hidden w-24 sm:block">
-										<DepartmentChip department={u.department} />
+									<div className="hidden w-40 sm:block">
+										<OrganizationChip id={u.organizationId} />
 									</div>
 									<div className="w-20 shrink-0 text-end">
 										<p

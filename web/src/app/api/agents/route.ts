@@ -3,16 +3,15 @@ import { and, asc, eq, ilike } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db';
 import { users } from '@/db/schema';
-import { requireUser } from '@/lib/auth';
-import { HttpError, handle } from '@/lib/http';
+import { requireSupervisor } from '@/lib/auth';
+import { handle } from '@/lib/http';
 import { likePattern } from '@/lib/search';
 
 const querySchema = z.object({ q: z.string().trim().max(100).optional() });
 
 /** Supervisor only (D23): the list of agents. */
 export const GET = handle(async (req) => {
-	const me = await requireUser();
-	if (me.role !== 'supervisor') throw new HttpError(403, 'forbidden');
+	await requireSupervisor();
 	const { q } = querySchema.parse(
 		Object.fromEntries(new URL(req.url).searchParams),
 	);
@@ -23,7 +22,7 @@ export const GET = handle(async (req) => {
 			slug: users.slug,
 			name: users.name,
 			email: users.email,
-			department: users.department,
+			organizationId: users.organizationId,
 			createdAt: users.createdAt,
 		})
 		.from(users)

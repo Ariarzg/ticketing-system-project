@@ -1,9 +1,10 @@
+// file: src/lib/auth.ts
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { users } from '@/db/schema';
+import { isStaff } from './constants';
 import { readSessionUserId } from './session';
 import { HttpError } from './http';
-import { isStaff } from './constants';
 
 export async function getCurrentUser() {
 	const id = await readSessionUserId();
@@ -15,7 +16,7 @@ export async function getCurrentUser() {
 			name: users.name,
 			email: users.email,
 			role: users.role,
-			department: users.department,
+			organizationId: users.organizationId,
 		})
 		.from(users)
 		.where(eq(users.id, id))
@@ -34,9 +35,16 @@ export async function requireUser(): Promise<SessionUser> {
 	return user;
 }
 
-/** Layer 2: must be an agent, otherwise 403. */
+/** Layer 2: must be staff (an agent or a supervisor), otherwise 403. */
 export async function requireStaff(): Promise<SessionUser> {
 	const user = await requireUser();
 	if (!isStaff(user.role)) throw new HttpError(403, 'forbidden');
+	return user;
+}
+
+/** Layer 2 for supervisor-only routes (D23, D24), otherwise 403. */
+export async function requireSupervisor(): Promise<SessionUser> {
+	const user = await requireUser();
+	if (user.role !== 'supervisor') throw new HttpError(403, 'forbidden');
 	return user;
 }

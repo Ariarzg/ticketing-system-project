@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Avatar, Skeleton, toast } from '@heroui/react';
 import { HeadsetIcon } from '@phosphor-icons/react';
-import { DepartmentChip } from '@/components/chips';
 import { EmptyBox } from '@/components/EmptyBox';
 import { PageHeader } from '@/components/PageHeader';
 import { SearchBox } from '@/components/SearchBox';
@@ -14,6 +13,7 @@ import { useMe } from '@/lib/hooks/use-me';
 import { useAgents } from '@/lib/hooks/use-users';
 import { initials } from '@/lib/initials';
 import { t } from '@/lib/strings.fa';
+import { OrganizationChip } from '@/components/OrganizationChip';
 
 export default function AgentsPage() {
 	// useSearchParams needs a Suspense boundary.
@@ -99,7 +99,7 @@ function AgentsView() {
 						className="hidden items-center gap-4 px-4 text-xs font-medium text-muted sm:flex"
 					>
 						<span className="flex-1">{t.users.colName}</span>
-						<span className="w-24">{t.users.colDepartment}</span>
+						<span className="w-40">{t.users.colOrganization}</span>
 					</div>
 					<ul className="divide-y divide-separator overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--surface-shadow)]">
 						{agents.map((a, index) => (
@@ -133,11 +133,11 @@ function AgentsView() {
 											{a.email}
 										</p>
 										<div className="mt-1.5 sm:hidden">
-											<DepartmentChip department={a.department} />
+											<OrganizationChip id={a.organizationId} />
 										</div>
 									</div>
-									<div className="hidden w-24 sm:block">
-										<DepartmentChip department={a.department} />
+									<div className="hidden w-40 sm:block">
+										<OrganizationChip id={a.organizationId} />
 									</div>
 								</Link>
 							</li>

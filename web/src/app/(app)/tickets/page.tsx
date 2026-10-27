@@ -39,7 +39,7 @@ function TicketsView() {
 	const isFiltered = [
 		'status',
 		'priority',
-		'department',
+		'organization',
 		'q',
 		'attention',
 	].some((k) => searchParams.has(k));
