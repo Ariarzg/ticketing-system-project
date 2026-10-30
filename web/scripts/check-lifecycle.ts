@@ -14,11 +14,13 @@ type Case = [
 ];
 
 const reply: TicketAction = { type: 'reply' };
+const deliver: TicketAction = { type: 'deliver' };
 const set = (to: Status): TicketAction => ({ type: 'set_status', to });
 
 const cases: Case[] = [
-	['open', reply, 'agent', 'answered'],
-	['in_progress', reply, 'agent', 'answered'],
+	// An agent's reply waits for review and leaves the status alone (D27).
+	['open', reply, 'agent', 'open'],
+	['in_progress', reply, 'agent', 'in_progress'],
 	['answered', reply, 'agent', 'answered'],
 	['open', reply, 'client', 'in_progress'],
 	['answered', reply, 'client', 'in_progress'],
@@ -40,6 +42,11 @@ const cases: Case[] = [
 	['answered', set('in_progress'), 'supervisor', 'in_progress'],
 	['open', set('closed'), 'supervisor', 'closed'],
 	['closed', reply, 'supervisor', 'ticket_closed'],
+	// Delivering a reviewed reply is what makes a ticket "answered" now (D1, D27).
+	['open', deliver, 'supervisor', 'answered'],
+	['in_progress', deliver, 'supervisor', 'answered'],
+	['open', deliver, 'agent', 'forbidden'],
+	['closed', deliver, 'supervisor', 'ticket_closed'],
 ];
 
 for (const [status, action, role, expected] of cases) {

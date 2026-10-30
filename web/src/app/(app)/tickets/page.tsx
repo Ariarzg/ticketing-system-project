@@ -45,6 +45,7 @@ function TicketsView() {
 		'q',
 		'attention',
 		'unassigned',
+		'review',
 	].some((k) => searchParams.has(k));
 
 	/** Updates several URL parameters in one navigation. A new filter always starts at page 1. */
@@ -103,6 +104,7 @@ function TicketsView() {
 					statusCounts={data?.statusCounts}
 					attentionCount={data?.attentionCount}
 					unassignedCount={data?.unassignedCount}
+					reviewCount={data?.reviewCount}
 				/>
 			)}
 

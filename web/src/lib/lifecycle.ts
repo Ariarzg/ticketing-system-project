@@ -2,6 +2,7 @@ import { isStaff, type Role, type Status } from './constants';
 
 export type TicketAction =
 	| { type: 'reply' }
+	| { type: 'deliver' }
 	| { type: 'set_status'; to: Status };
 
 export type TransitionErrorCode =
@@ -28,7 +29,14 @@ export function transition(
 	if (action.type === 'reply') {
 		// The supervisor assigns and supervises; only the client and the assigned agent write (D25).
 		if (role === 'supervisor') throw new TransitionError('forbidden');
-		return role === 'agent' ? 'answered' : 'in_progress';
+		// An agent's reply waits for review, so it changes nothing until it is delivered (D27).
+		return role === 'agent' ? current : 'in_progress';
+	}
+
+	if (action.type === 'deliver') {
+		// The supervisor confirmed or changed an agent's reply: the client now has an answer (D1, D27).
+		if (role !== 'supervisor') throw new TransitionError('forbidden');
+		return 'answered';
 	}
 
 	if (!isStaff(role)) throw new TransitionError('forbidden');

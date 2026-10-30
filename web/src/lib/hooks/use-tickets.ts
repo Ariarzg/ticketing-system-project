@@ -29,6 +29,7 @@ export type TicketsResponse = {
 	statusCounts?: Record<Status, number>;
 	attentionCount?: number;
 	unassignedCount?: number;
+	reviewCount?: number;
 };
 
 /** `search` is the raw query string, e.g. "status=open&page=2". */

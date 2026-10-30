@@ -12,8 +12,8 @@ const priorityOptions = [
 	...PRIORITIES.map((id) => ({ id, label: t.priority[id] })),
 ];
 
-/** The views besides the status tabs. Each is its own URL flag (?attention=1, ?unassigned=1); only one is on at a time. */
-const VIEW_FLAGS = ['attention', 'unassigned'] as const;
+/** The views besides the status tabs. Each is its own URL flag (?attention=1, ?unassigned=1, ?review=1); only one is on at a time. */
+const VIEW_FLAGS = ['attention', 'unassigned', 'review'] as const;
 const isViewFlag = (key: string) =>
 	(VIEW_FLAGS as readonly string[]).includes(key);
 
@@ -25,6 +25,7 @@ export function TicketFilters({
 	statusCounts,
 	attentionCount,
 	unassignedCount,
+	reviewCount,
 }: {
 	params: URLSearchParams;
 	/** Changes several URL parameters in one navigation. A null value removes the parameter. */
@@ -36,6 +37,7 @@ export function TicketFilters({
 	statusCounts?: Record<Status, number>;
 	attentionCount?: number;
 	unassignedCount?: number;
+	reviewCount?: number;
 }) {
 	const { data: organizations } = useOrganizations();
 	const organizationOptions = [
@@ -71,6 +73,7 @@ export function TicketFilters({
 					label: t.filters.unassigned,
 					count: unassignedCount,
 				},
+				{ id: 'review', label: t.filters.review, count: reviewCount },
 			]
 		:	[]),
 		...(isAgent ?

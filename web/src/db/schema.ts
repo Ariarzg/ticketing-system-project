@@ -8,12 +8,18 @@ import {
 	uniqueIndex,
 	uuid,
 } from 'drizzle-orm/pg-core';
-import { PRIORITIES, ROLES, STATUSES } from '../lib/constants';
+import {
+	PRIORITIES,
+	REVIEW_STATUSES,
+	ROLES,
+	STATUSES,
+} from '../lib/constants';
 import { sql } from 'drizzle-orm';
 
 export const roleEnum = pgEnum('role', ROLES);
 export const priorityEnum = pgEnum('priority', PRIORITIES);
 export const statusEnum = pgEnum('status', STATUSES);
+export const reviewEnum = pgEnum('review_status', REVIEW_STATUSES);
 
 export const organizations = pgTable(
 	'organizations',
@@ -91,6 +97,14 @@ export const messages = pgTable(
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
 		body: text('body').notNull(),
+		// Null: no review needed (client replies, and agent replies from before v1.4). D27.
+		reviewStatus: reviewEnum('review_status'),
+		// The supervisor's version, sent to the client instead of `body` when the status is "changed".
+		editedBody: text('edited_body'),
+		// Why the supervisor denied the reply; staff only.
+		reviewNote: text('review_note'),
+		reviewedById: uuid('reviewed_by_id').references(() => users.id),
+		reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
 		createdAt: timestamp('created_at', { withTimezone: true })
 			.notNull()
 			.defaultNow(),

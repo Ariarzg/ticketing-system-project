@@ -1,6 +1,6 @@
-import { and, eq } from 'drizzle-orm';
+import { and, count, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { tickets } from '@/db/schema';
+import { messages, tickets } from '@/db/schema';
 import { requireStaff } from '@/lib/auth';
 import { HttpError, handle, uuidParam } from '@/lib/http';
 import { nextStatusOrHttpError, ticketScope } from '@/lib/tickets';
@@ -27,6 +27,18 @@ export const PATCH = handle<{ params: Promise<{ id: string }> }>(
 				{ type: 'set_status', to: status },
 				user.role,
 			);
+
+			if (next === 'closed') {
+				const [{ n }] = await tx
+					.select({ n: count() })
+					.from(messages)
+					.where(
+						and(eq(messages.ticketId, id), eq(messages.reviewStatus, 'pending')),
+					);
+				// A reply waiting for review would be stuck forever on a closed ticket (D27).
+				if (n > 0) throw new HttpError(409, 'pending_review');
+			}
+
 			await tx
 				.update(tickets)
 				.set({ status: next, updatedAt: new Date() })

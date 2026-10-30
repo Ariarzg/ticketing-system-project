@@ -13,6 +13,7 @@ export const listQuerySchema = z.object({
 	q: z.string().trim().max(100).optional(),
 	attention: z.literal('1').optional(),
 	unassigned: z.literal('1').optional(),
+	review: z.literal('1').optional(),
 	page: z.coerce.number().int().min(1).default(1),
 });
 
@@ -28,3 +29,15 @@ export const assignSchema = z.object({
 	agentId: z.uuid(),
 	priority: z.enum(PRIORITIES),
 });
+
+export const reviewSchema = z.discriminatedUnion('action', [
+	z.object({ action: z.literal('confirm') }),
+	z.object({
+		action: z.literal('change'),
+		body: z.string().trim().min(1).max(5000),
+	}),
+	z.object({
+		action: z.literal('deny'),
+		note: z.string().trim().min(1).max(1000),
+	}),
+]);

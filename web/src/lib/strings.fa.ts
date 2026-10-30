@@ -146,6 +146,7 @@ export const t = {
 		searchClientPlaceholder: 'جستجوی عنوان',
 		attention: 'نیازمند پاسخ',
 		unassigned: 'نیازمند پشتیبان',
+		review: 'نیازمند تأیید پیام',
 		clear: 'پاک کردن فیلترها',
 		previous: 'قبلی',
 		next: 'بعدی',
@@ -229,6 +230,24 @@ export const t = {
 		none: 'هنوز سپرده نشده',
 	},
 
+	review: {
+		pending: 'در انتظار تأیید سرپرست',
+		confirmed: 'تأیید سرپرست',
+		original: 'متن اصلی پشتیبان؛ کاربر آن را نمی‌بیند',
+		changed: 'نسخه ویرایش‌شده سرپرست؛ همین برای کاربر فرستاده شد',
+		denied: 'رد شد؛ کاربر این پیام را نمی‌بیند',
+		denyNote: 'دلیل رد از طرف سرپرست',
+		confirm: 'تأیید و ارسال',
+		change: 'ویرایش',
+		deny: 'رد',
+		changeLabel: 'متن ویرایش‌شده',
+		denyLabel: 'دلیل رد',
+		denyPlaceholder: 'به پشتیبان بگویید چه چیزی باید تغییر کند',
+		sendChanged: 'ارسال نسخه ویرایش‌شده',
+		sendDeny: 'رد پیام',
+		done: 'بررسی پیام ثبت شد.',
+	},
+
 	// Keys that match the error codes the API returns ("error" field of the JSON).
 	errors: {
 		server: 'مشکلی پیش آمد. دوباره تلاش کنید.',
@@ -251,5 +270,8 @@ export const t = {
 		org_name_taken: 'سازمانی با این نام وجود دارد.',
 		org_is_default: 'سازمان پیش‌فرض را نمی‌توان حذف کرد.',
 		already_assigned: 'این تیکت قبلاً به یک پشتیبان سپرده شده است.',
+		already_reviewed: 'این پیام قبلاً بررسی شده است.',
+		pending_review:
+			'پیش از بستن تیکت، پیام‌هایی را که منتظر تأیید هستند بررسی کنید.',
 	},
 } as const;

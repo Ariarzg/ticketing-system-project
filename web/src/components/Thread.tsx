@@ -2,13 +2,22 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Kbd, ScrollShadow, Skeleton, TextArea } from "@heroui/react";
-import { LockSimpleIcon, PaperPlaneTiltIcon } from "@phosphor-icons/react";
-import { useMessages, useSendMessage } from "@/lib/hooks/use-messages";
+import {
+  HourglassMediumIcon,
+  LockSimpleIcon,
+  PaperPlaneTiltIcon,
+  PencilSimpleIcon,
+  ProhibitIcon,
+  SealCheckIcon,
+} from "@phosphor-icons/react";
+import { isStaff } from "@/lib/constants";
+import { useMessages, useSendMessage, type MessageDto } from "@/lib/hooks/use-messages";
 import type { MeUser } from "@/lib/hooks/use-me";
 import type { TicketDto } from "@/lib/hooks/use-tickets";
 import { t } from "@/lib/strings.fa";
 import { LoadingButton } from "./LoadingButton";
-import { MessageBubble } from "./MessageBubble";
+import { MessageBubble, type BubbleTone } from "./MessageBubble";
+import { ReviewControls } from "./ReviewControls";
 
 /** Messages from the same author within this time are shown as one group. */
 const GROUP_WINDOW_MS = 5 * 60_000;
@@ -77,23 +86,20 @@ export function Thread({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
           body={ticket.description}
           createdAt={ticket.createdAt}
           mine={ticket.authorId === me.id}
+          // The client wrote it, so it is on the client's side.
+          ourSide={!isStaff(me.role)}
         />
         {isLoading && <MessagesSkeleton />}
         {messages?.map((m, i) => {
           const prev = i === 0 ? { authorId: ticket.authorId, createdAt: ticket.createdAt } : messages[i - 1];
+          // A changed or denied reply is followed by the supervisor's bubble, so the next one starts a new group.
+          const prevReview = i === 0 ? null : messages[i - 1].review?.status;
           const grouped =
-            prev.authorId === m.authorId && Date.parse(m.createdAt) - Date.parse(prev.createdAt) < GROUP_WINDOW_MS;
-          return (
-            <MessageBubble
-              key={m.id}
-              author={m.authorName}
-              role={m.authorRole}
-              body={m.body}
-              createdAt={m.createdAt}
-              mine={m.authorId === me.id}
-              grouped={grouped}
-            />
-          );
+            prev.authorId === m.authorId &&
+            prevReview !== "changed" &&
+            prevReview !== "denied" &&
+            Date.parse(m.createdAt) - Date.parse(prev.createdAt) < GROUP_WINDOW_MS;
+          return <ThreadMessage key={m.id} message={m} me={me} ticketId={ticket.id} grouped={grouped} />;
         })}
       </ScrollShadow>
 
@@ -160,6 +166,85 @@ export function Thread({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
         )}
       </div>
     </section>
+  );
+}
+
+/** A small line under a bubble that says what happened to it. */
+function ReviewMark({ icon, text }: { icon?: React.ReactNode; text: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-muted">
+      {icon}
+      {text}
+    </span>
+  );
+}
+
+/** One reply, drawn by what the supervisor did with it (D27). Clients get `review: null`, so they see a plain bubble. */
+function ThreadMessage({
+  message: m,
+  me,
+  ticketId,
+  grouped,
+}: {
+  message: MessageDto;
+  me: MeUser;
+  ticketId: string;
+  grouped: boolean;
+}) {
+  const review = m.review;
+  const bubble = (tone: BubbleTone, footer?: React.ReactNode) => (
+    <MessageBubble
+      author={m.authorName}
+      role={m.authorRole}
+      body={m.body}
+      createdAt={m.createdAt}
+      mine={m.authorId === me.id}
+      // Staff (agents and the supervisor) share one side, the client has the other.
+      ourSide={isStaff(m.authorRole) === isStaff(me.role)}
+      grouped={grouped}
+      tone={tone}
+      footer={footer}
+    />
+  );
+
+  if (!review) return bubble("default");
+
+  if (review.status === "pending") {
+    return bubble(
+      "muted",
+      <>
+        <ReviewMark icon={<HourglassMediumIcon size={14} />} text={t.review.pending} />
+        {me.role === "supervisor" && <ReviewControls ticketId={ticketId} message={m} />}
+      </>,
+    );
+  }
+
+  if (review.status === "confirmed") {
+    return bubble("default", <ReviewMark icon={<SealCheckIcon size={14} />} text={t.review.confirmed} />);
+  }
+
+  // Changed or denied: the agent's original stays visible to staff, and the supervisor's text follows it.
+  const changed = review.status === "changed";
+  return (
+    <>
+      {bubble(
+        "muted",
+        <ReviewMark
+          icon={changed ? <PencilSimpleIcon size={14} /> : <ProhibitIcon size={14} />}
+          text={changed ? t.review.original : t.review.denied}
+        />,
+      )}
+      <MessageBubble
+        author={t.role.supervisor}
+        body={(changed ? review.editedBody : review.note) ?? ""}
+        createdAt={review.reviewedAt ?? m.createdAt}
+        mine={me.role === "supervisor"}
+        // Only staff ever see this bubble, and it sits on the staff side.
+        ourSide
+        tone={changed ? "warning" : "danger"}
+        footer={<ReviewMark text={changed ? t.review.changed : t.review.denyNote} />}
+      />
+    </>
   );
 }
 

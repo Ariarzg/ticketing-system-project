@@ -8,9 +8,10 @@ import {
 	isNull,
 	ne,
 	or,
+	sql,
 } from 'drizzle-orm';
 import { db } from '@/db';
-import { tickets, users } from '@/db/schema';
+import { messages, tickets, users } from '@/db/schema';
 import { requireUser } from '@/lib/auth';
 import {
 	ATTENTION_STATUSES,
@@ -52,6 +53,9 @@ export const GET = handle(async (req) => {
 		isNull(tickets.assigneeId),
 		ne(tickets.status, 'closed'),
 	);
+	// "Message confirmation needed": an agent's reply on this ticket waits for review (D27).
+	// Raw SQL so both columns keep their table names inside the correlated subquery.
+	const needsReview = sql`exists (select 1 from ${messages} where ${messages.ticketId} = ${tickets.id} and ${messages.reviewStatus} = 'pending')`;
 
 	// What every list and count here shares: D10 layer 3 is always applied.
 	const base = and(ticketScope(user), priority, organization, search);
@@ -62,10 +66,16 @@ export const GET = handle(async (req) => {
 			inArray(tickets.status, [...ATTENTION_STATUSES])
 		:	undefined,
 		supervisor && query.unassigned ? unassigned : undefined,
+		supervisor && query.review ? needsReview : undefined,
 	);
 
-	const [items, [{ total }], countRows, [{ unassignedCount }]] =
-		await Promise.all([
+	const [
+		items,
+		[{ total }],
+		countRows,
+		[{ unassignedCount }],
+		[{ reviewCount }],
+	] = await Promise.all([
 			db
 				.select(ticketColumns)
 				.from(tickets)
@@ -92,6 +102,11 @@ export const GET = handle(async (req) => {
 				.from(tickets)
 				.innerJoin(users, eq(tickets.userId, users.id))
 				.where(and(base, unassigned)),
+			db
+				.select({ reviewCount: count() })
+				.from(tickets)
+				.innerJoin(users, eq(tickets.userId, users.id))
+				.where(and(base, needsReview)),
 		]);
 
 	const statusCounts = Object.fromEntries(
@@ -111,6 +126,7 @@ export const GET = handle(async (req) => {
 		statusCounts,
 		attentionCount,
 		unassignedCount: supervisor ? unassignedCount : undefined,
+		reviewCount: supervisor ? reviewCount : undefined,
 	});
 });
 
