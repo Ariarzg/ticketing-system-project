@@ -2,8 +2,10 @@
 import { Avatar } from '@heroui/react';
 import { isStaff, type Role } from '@/lib/constants';
 import { formatDate, formatRelative } from '@/lib/dates';
+import type { AttachmentDto } from '@/lib/files';
 import { initials } from '@/lib/initials';
 import { t } from '@/lib/strings.fa';
+import { Attachments } from './Attachments';
 
 /** How a bubble is drawn. Only staff ever see anything but "default" (D27). */
 export type BubbleTone = 'default' | 'muted' | 'warning' | 'danger';
@@ -23,6 +25,7 @@ export function MessageBubble({
 	grouped = false,
 	tone = 'default',
 	footer,
+	attachments = [],
 }: {
 	author: string;
 	role?: Role;
@@ -36,6 +39,8 @@ export function MessageBubble({
 	tone?: BubbleTone;
 	/** Shown under the bubble, also when it is grouped: the review mark and the supervisor's buttons. */
 	footer?: React.ReactNode;
+	/** Files sent with the message, shown under the text (D28). */
+	attachments?: AttachmentDto[];
 }) {
 	const staff = role !== undefined && isStaff(role);
 	const toneClass = {
@@ -84,13 +89,20 @@ export function MessageBubble({
 						</time>
 					</div>
 				)}
-				<p
-					dir="auto"
-					title={grouped ? formatDate(createdAt) : undefined}
-					className={`whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-base leading-relaxed ${toneClass}`}
-				>
-					{body}
-				</p>
+				{/* A reply may be files only (D28). */}
+				{body && (
+					<p
+						dir="auto"
+						title={grouped ? formatDate(createdAt) : undefined}
+						className={`whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-base leading-relaxed ${toneClass}`}
+					>
+						{body}
+					</p>
+				)}
+				<Attachments
+					files={attachments}
+					ourSide={ourSide}
+				/>
 				{footer && (
 					<div
 						className={`flex w-full flex-col gap-2 px-1 ${ourSide ? 'items-end' : 'items-start'}`}

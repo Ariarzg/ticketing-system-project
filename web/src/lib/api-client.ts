@@ -10,15 +10,17 @@ export class ApiError extends Error {
 type Options = {
   method?: string;
   json?: unknown;
+  /** Sent as multipart (files). No Content-Type header: the browser adds it with the boundary. */
+  form?: FormData;
 };
 
-export async function api<T>(url: string, { method, json }: Options = {}): Promise<T> {
+export async function api<T>(url: string, { method, json, form }: Options = {}): Promise<T> {
   let res: Response;
   try {
     res = await fetch(url, {
       method,
       headers: json !== undefined ? { "Content-Type": "application/json" } : undefined,
-      body: json !== undefined ? JSON.stringify(json) : undefined,
+      body: form ?? (json !== undefined ? JSON.stringify(json) : undefined),
     });
   } catch {
     throw new ApiError(0, "network");

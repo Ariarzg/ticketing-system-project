@@ -3,6 +3,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api } from '../api-client';
 import type { Priority, Status } from '../constants';
+import type { AttachmentDto } from '../files';
 
 export type TicketDto = {
 	id: string;
@@ -20,6 +21,9 @@ export type TicketDto = {
 	authorName: string;
 	authorSlug: string;
 };
+
+/** One ticket as its own page gets it: with the files attached to the description (D28). */
+export type TicketDetailDto = TicketDto & { attachments: AttachmentDto[] };
 
 export type TicketsResponse = {
 	items: TicketDto[];
@@ -47,7 +51,9 @@ export function useTicket(id: string) {
 	return useQuery({
 		queryKey: ['ticket', id],
 		queryFn: () =>
-			api<{ ticket: TicketDto }>(`/api/tickets/${id}`).then((r) => r.ticket),
+			api<{ ticket: TicketDetailDto }>(`/api/tickets/${id}`).then(
+				(r) => r.ticket,
+			),
 		refetchInterval: 4_000, // polling: status changes from the other side show up (D9)
 	});
 }

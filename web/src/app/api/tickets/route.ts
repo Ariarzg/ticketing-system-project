@@ -21,6 +21,7 @@ import {
 } from '@/lib/constants';
 import { HttpError, handle } from '@/lib/http';
 import { likePattern } from '@/lib/search';
+import { readBody, saveFiles } from '@/lib/storage';
 import { forViewer, ticketColumns, ticketScope } from '@/lib/tickets';
 import { createTicketSchema, listQuerySchema } from '@/lib/validation/tickets';
 
@@ -134,18 +135,24 @@ export const POST = handle(async (req) => {
 	const user = await requireUser();
 	if (user.role !== 'client') throw new HttpError(403, 'forbidden');
 
-	const input = createTicketSchema.parse(await req.json());
+	const { fields, files } = await readBody(req);
+	const input = createTicketSchema.parse(fields);
 
-	const [ticket] = await db
-		.insert(tickets)
-		.values({
-			userId: user.id,
-			title: input.title,
-			description: input.description,
-			// No priority: the supervisor sets it when assigning the ticket (D26).
-			organizationId: user.organizationId, // D7, D24: copied from the author
-		})
-		.returning({ id: tickets.id });
+	const ticket = await db.transaction(async (tx) => {
+		const [created] = await tx
+			.insert(tickets)
+			.values({
+				userId: user.id,
+				title: input.title,
+				description: input.description,
+				// No priority: the supervisor sets it when assigning the ticket (D26).
+				organizationId: user.organizationId, // D7, D24: copied from the author
+			})
+			.returning({ id: tickets.id });
+		// The files belong to the description, the first bubble of the thread (D17, D28).
+		await saveFiles(tx, files, { ticketId: created.id });
+		return created;
+	});
 
 	return Response.json({ id: ticket.id }, { status: 201 });
 });

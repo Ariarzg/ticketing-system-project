@@ -18,7 +18,8 @@ export const listQuerySchema = z.object({
 });
 
 export const messageSchema = z.object({
-	body: z.string().trim().min(1).max(5000),
+	// May be empty when files are sent; the route refuses a reply with neither (D28).
+	body: z.string().trim().max(5000).default(''),
 });
 
 export const statusSchema = z.object({

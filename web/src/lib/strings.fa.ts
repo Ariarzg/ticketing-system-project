@@ -248,6 +248,16 @@ export const t = {
 		done: 'بررسی پیام ثبت شد.',
 	},
 
+	files: {
+		attach: 'پیوست فایل',
+		picked: 'فایل‌های انتخاب‌شده',
+		remove: 'حذف',
+		download: 'دانلود',
+		close: 'بستن',
+		// The same limits as MAX_FILES and MAX_TOTAL_BYTES in lib/files.ts.
+		hint: 'تا ۳ فایل، روی هم تا ۴ مگابایت: تصویر، PDF، Word، Excel، متن یا ZIP',
+	},
+
 	// Keys that match the error codes the API returns ("error" field of the JSON).
 	errors: {
 		server: 'مشکلی پیش آمد. دوباره تلاش کنید.',
@@ -273,5 +283,9 @@ export const t = {
 		already_reviewed: 'این پیام قبلاً بررسی شده است.',
 		pending_review:
 			'پیش از بستن تیکت، پیام‌هایی را که منتظر تأیید هستند بررسی کنید.',
+		too_many_files: 'حداکثر ۳ فایل می‌توانید پیوست کنید.',
+		files_too_large: 'حجم فایل‌ها روی هم نباید از ۴ مگابایت بیشتر باشد.',
+		file_type:
+			'این نوع فایل پذیرفته نمی‌شود. تصویر، PDF، Word، Excel، متن یا ZIP بفرستید.',
 	},
 } as const;

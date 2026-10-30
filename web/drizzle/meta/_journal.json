@@ -57,6 +57,13 @@
       "when": 1793359344469,
       "tag": "0007_exotic_dust",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793362703120,
+      "tag": "0008_broken_ken_ellis",
+      "breakpoints": true
     }
   ]
 }

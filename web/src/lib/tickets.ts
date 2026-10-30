@@ -1,7 +1,8 @@
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
 import { db } from '@/db';
-import { tickets, users } from '@/db/schema';
+import { attachments, messages, tickets, users } from '@/db/schema';
 import type { SessionUser } from './auth';
+import type { AttachmentDto } from './files';
 import { HttpError } from './http';
 import { TransitionError, transition, type TicketAction } from './lifecycle';
 import type { Priority, Role, Status } from './constants';
@@ -36,6 +37,36 @@ export function forViewer<
 	return user.role === 'client' ?
 			{ ...row, priority: null, assigneeId: null }
 		:	row;
+}
+
+/** A client sees a reply only when it needs no review or the supervisor let it through (D27), and its files the same way (D28). */
+export const deliveredToClient = or(
+	isNull(messages.reviewStatus),
+	inArray(messages.reviewStatus, ['confirmed', 'changed']),
+);
+
+/**
+ * Every file of a ticket, grouped by the message it belongs to; the key `null` holds the description's files.
+ * It does not check access: call it only after `getVisibleTicket`.
+ */
+export async function ticketFiles(ticketId: string) {
+	const rows = await db
+		.select({
+			id: attachments.id,
+			messageId: attachments.messageId,
+			name: attachments.name,
+			type: attachments.type,
+			size: attachments.size,
+		})
+		.from(attachments)
+		.where(eq(attachments.ticketId, ticketId))
+		// Files of one message share the same created time, so the name gives a stable order.
+		.orderBy(asc(attachments.name));
+	const byOwner = new Map<string | null, AttachmentDto[]>();
+	for (const { messageId, ...file } of rows) {
+		byOwner.set(messageId, [...(byOwner.get(messageId) ?? []), file]);
+	}
+	return byOwner;
 }
 
 /** One ticket the user is allowed to see, or a 404. */

@@ -13,8 +13,9 @@ import {
 import { isStaff } from "@/lib/constants";
 import { useMessages, useSendMessage, type MessageDto } from "@/lib/hooks/use-messages";
 import type { MeUser } from "@/lib/hooks/use-me";
-import type { TicketDto } from "@/lib/hooks/use-tickets";
+import type { TicketDetailDto } from "@/lib/hooks/use-tickets";
 import { t } from "@/lib/strings.fa";
+import { AttachButton, PickedFiles } from "./FilePicker";
 import { LoadingButton } from "./LoadingButton";
 import { MessageBubble, type BubbleTone } from "./MessageBubble";
 import { ReviewControls } from "./ReviewControls";
@@ -30,12 +31,14 @@ function readDraft(key: string): string {
   }
 }
 
-export function Thread({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
+export function Thread({ ticket, me }: { ticket: TicketDetailDto; me: MeUser }) {
   const { data: messages, isLoading } = useMessages(ticket.id);
   const send = useSendMessage(ticket.id);
   // The unsent reply survives a reload or a visit to another page, for this browser tab.
   const draftKey = `reply:${ticket.id}`;
   const [body, setBody] = useState(() => readDraft(draftKey));
+  // Chosen files are not kept with the draft: a browser cannot put a File in sessionStorage.
+  const [files, setFiles] = useState<File[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
   // True while the reader is at the newest message. Polled messages only scroll the list then,
   // so someone reading older messages is not pulled down every few seconds.
@@ -64,9 +67,17 @@ export function Thread({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
 
   function submit() {
     const text = body.trim();
-    if (!text || send.isPending) return;
+    if ((!text && files.length === 0) || send.isPending) return;
     atBottom.current = true; // your own message always comes into view
-    send.mutate(text, { onSuccess: () => setBody("") });
+    send.mutate(
+      { body: text, files },
+      {
+        onSuccess: () => {
+          setBody("");
+          setFiles([]);
+        },
+      },
+    );
   }
 
   return (
@@ -84,6 +95,7 @@ export function Thread({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
         <MessageBubble
           author={ticket.authorName}
           body={ticket.description}
+          attachments={ticket.attachments}
           createdAt={ticket.createdAt}
           mine={ticket.authorId === me.id}
           // The client wrote it, so it is on the client's side.
@@ -144,7 +156,9 @@ export function Thread({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
               }}
               placeholder={t.thread.replyPlaceholder}
             />
+            <PickedFiles files={files} onChange={setFiles} />
             <div className="flex items-center justify-between gap-3">
+              <AttachButton files={files} onChange={setFiles} isDisabled={send.isPending} />
               <span className="hidden items-center gap-1.5 text-xs text-muted pointer-fine:flex">
                 <Kbd dir="ltr">
                   <Kbd.Content>Enter</Kbd.Content>
@@ -155,7 +169,7 @@ export function Thread({ ticket, me }: { ticket: TicketDto; me: MeUser }) {
                 type="submit"
                 variant="primary"
                 isPending={send.isPending}
-                isDisabled={body.trim() === ""}
+                isDisabled={body.trim() === "" && files.length === 0}
                 icon={<PaperPlaneTiltIcon size={18} />}
                 className="ms-auto"
               >
@@ -197,6 +211,7 @@ function ThreadMessage({
       author={m.authorName}
       role={m.authorRole}
       body={m.body}
+      attachments={m.attachments}
       createdAt={m.createdAt}
       mine={m.authorId === me.id}
       // Staff (agents and the supervisor) share one side, the client has the other.

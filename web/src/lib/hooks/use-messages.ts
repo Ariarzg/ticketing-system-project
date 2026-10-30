@@ -5,6 +5,7 @@ import { toast } from "@heroui/react";
 import { api } from "../api-client";
 import type { ReviewStatus, Role } from "../constants";
 import { errorMessage } from "../errors";
+import { toForm, type AttachmentDto } from "../files";
 import { t } from "../strings.fa";
 
 /** What the supervisor did with an agent's reply. Clients always get null (D27). */
@@ -23,6 +24,8 @@ export type MessageDto = {
   authorName: string;
   authorRole: Role;
   review: MessageReview | null;
+  /** Files sent with the message (D28). */
+  attachments: AttachmentDto[];
 };
 
 export type ReviewInput = { messageId: string } & (
@@ -42,8 +45,12 @@ export function useMessages(ticketId: string) {
 export function useSendMessage(ticketId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: string) =>
-      api<{ message: MessageDto }>(`/api/tickets/${ticketId}/messages`, { method: "POST", json: { body } }),
+    // Always a form, with or without files: the API reads both the same way.
+    mutationFn: ({ body, files }: { body: string; files: File[] }) =>
+      api<{ message: MessageDto }>(`/api/tickets/${ticketId}/messages`, {
+        method: "POST",
+        form: toForm({ body }, files),
+      }),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["messages", ticketId] }),

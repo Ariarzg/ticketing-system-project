@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button, Description, FieldError, Input, Label, TextArea, TextField, toast } from "@heroui/react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { AttachButton, PickedFiles } from "@/components/FilePicker";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { api } from "@/lib/api-client";
 import { errorMessage } from "@/lib/errors";
+import { toForm } from "@/lib/files";
 import { useMe } from "@/lib/hooks/use-me";
 import { t } from "@/lib/strings.fa";
 
@@ -27,6 +29,7 @@ export default function NewTicketPage() {
   const { data: me } = useMe();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const [discarding, setDiscarding] = useState(false);
 
   // Only clients create tickets; staff are sent back to the list.
@@ -36,7 +39,8 @@ export default function NewTicketPage() {
 
   const create = useMutation({
     // No priority: the supervisor sets it when assigning the ticket (D26).
-    mutationFn: () => api<{ id: string }>("/api/tickets", { method: "POST", json: { title, description } }),
+    mutationFn: () =>
+      api<{ id: string }>("/api/tickets", { method: "POST", form: toForm({ title, description }, files) }),
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ["tickets"] });
       toast.success(t.tickets.created);
@@ -45,7 +49,7 @@ export default function NewTicketPage() {
     onError: (err) => toast.danger(errorMessage(err)),
   });
 
-  const dirty = (title.trim() !== "" || description.trim() !== "") && !create.isSuccess;
+  const dirty = (title.trim() !== "" || description.trim() !== "" || files.length > 0) && !create.isSuccess;
 
   // Reloading or closing the tab with text in the form asks first. In-app links cannot be stopped this way;
   // the Cancel button asks with its own dialog.
@@ -96,6 +100,14 @@ export default function NewTicketPage() {
           </Description>
           <FieldError />
         </TextField>
+        {/* The files go with the description, the first bubble of the thread (D17, D28). */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <AttachButton files={files} onChange={setFiles} isDisabled={create.isPending} />
+            <span className="text-sm text-muted">{t.files.hint}</span>
+          </div>
+          <PickedFiles files={files} onChange={setFiles} />
+        </div>
         <div className="flex items-center justify-end gap-2 border-t border-separator pt-5">
           <Button variant="tertiary" onPress={() => (dirty ? setDiscarding(true) : router.push("/tickets"))}>
             {t.common.cancel}

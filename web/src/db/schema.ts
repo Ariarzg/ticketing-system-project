@@ -1,6 +1,7 @@
 import {
 	boolean,
 	index,
+	integer,
 	pgEnum,
 	pgTable,
 	text,
@@ -112,4 +113,27 @@ export const messages = pgTable(
 	(table) => [
 		index('messages_ticket_created_idx').on(table.ticketId, table.createdAt),
 	],
+);
+
+export const attachments = pgTable(
+	'attachments',
+	{
+		// Set by the API before the upload, because the file's key in the bucket is built from it (D28).
+		id: uuid('id').primaryKey(),
+		ticketId: uuid('ticket_id')
+			.notNull()
+			.references(() => tickets.id, { onDelete: 'cascade' }),
+		// Null: the file belongs to the ticket's description, the first bubble of the thread (D17).
+		messageId: uuid('message_id').references(() => messages.id, {
+			onDelete: 'cascade',
+		}),
+		// The name the file had on the user's computer: shown in the thread and used when it is saved.
+		name: text('name').notNull(),
+		type: text('type').notNull(),
+		size: integer('size').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(table) => [index('attachments_ticket_id_idx').on(table.ticketId)],
 );
