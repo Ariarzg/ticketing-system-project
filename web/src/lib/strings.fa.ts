@@ -170,6 +170,10 @@ export const t = {
 		notFound: 'کاربر پیدا نشد.',
 		agentProfileHint:
 			'این حساب از کارکنان پشتیبانی است. کارکنان تیکت ثبت نمی‌کنند؛ هر پشتیبان تیکت‌هایی را می‌بیند که سرپرست به او سپرده است.',
+		activeTickets: 'تیکت‌های فعال',
+		closedTickets: 'تیکت‌های بسته',
+		noActive: 'تیکت فعالی ندارد',
+		noClosed: 'تیکت بسته‌ای ندارد',
 		promote: 'ارتقا به پشتیبان',
 		promoteTitle: 'این کاربر پشتیبان شود؟',
 		promoteText:
@@ -184,6 +188,8 @@ export const t = {
 		searchPlaceholder: 'جستجوی نام پشتیبان',
 		empty: 'پشتیبانی پیدا نشد',
 		back: 'بازگشت به پشتیبان‌ها',
+		colActive: 'فعال',
+		colClosed: 'بسته',
 	},
 
 	organizations: {
@@ -211,6 +217,11 @@ export const t = {
 		createdLabel: 'ایجاد',
 		notFound: 'سازمان پیدا نشد.',
 		empty: 'سازمانی وجود ندارد',
+		back: 'بازگشت به سازمان‌ها',
+		activeTickets: 'تیکت‌های فعال این سازمان',
+		noActive: 'این سازمان تیکت فعالی ندارد',
+		members: 'کاربران این سازمان',
+		noMembers: 'کسی عضو این سازمان نیست',
 	},
 
 	assign: {

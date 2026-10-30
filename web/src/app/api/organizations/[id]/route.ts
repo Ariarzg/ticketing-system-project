@@ -1,12 +1,58 @@
 // file: src/app/api/organizations/[id]/route.ts
-import { and, eq, ne } from 'drizzle-orm';
+import { and, asc, desc, eq, ne } from 'drizzle-orm';
 import { db } from '@/db';
 import { organizations, tickets, users } from '@/db/schema';
 import { requireSupervisor } from '@/lib/auth';
 import { HttpError, handle, uuidParam } from '@/lib/http';
+import { ticketColumns } from '@/lib/tickets';
 import { organizationSchema } from '@/lib/validation/organizations';
 
 type Ctx = { params: Promise<{ id: string }> };
+
+/** Supervisor only: one organization's page, with its active tickets and everyone in it (D29). */
+export const GET = handle<Ctx>(async (_req, ctx) => {
+	await requireSupervisor();
+	const id = await uuidParam(ctx);
+
+	const [organization] = await db
+		.select({
+			id: organizations.id,
+			name: organizations.name,
+			isDefault: organizations.isDefault,
+			createdAt: organizations.createdAt,
+		})
+		.from(organizations)
+		.where(eq(organizations.id, id))
+		.limit(1);
+	if (!organization) throw new HttpError(404, 'not_found');
+
+	// shortcut: no paging (100 tickets, 500 people); add it if an organization ever outgrows that.
+	const [activeTickets, members] = await Promise.all([
+		db
+			.select(ticketColumns)
+			.from(tickets)
+			.innerJoin(users, eq(tickets.userId, users.id))
+			.where(and(eq(tickets.organizationId, id), ne(tickets.status, 'closed')))
+			.orderBy(desc(tickets.updatedAt), desc(tickets.id))
+			.limit(100),
+		db
+			.select({
+				id: users.id,
+				slug: users.slug,
+				name: users.name,
+				email: users.email,
+				role: users.role,
+				createdAt: users.createdAt,
+			})
+			.from(users)
+			.where(eq(users.organizationId, id))
+			// Staff first (supervisor, then agents), then clients, each by name.
+			.orderBy(desc(users.role), asc(users.name))
+			.limit(500),
+	]);
+
+	return Response.json({ organization, tickets: activeTickets, users: members });
+});
 
 /** Supervisor only: renames an organization. The default one can be renamed too. */
 export const PATCH = handle<Ctx>(async (req, ctx) => {

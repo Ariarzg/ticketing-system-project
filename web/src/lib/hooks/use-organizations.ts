@@ -4,8 +4,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@heroui/react';
 import { api } from '../api-client';
+import type { Role } from '../constants';
 import { errorMessage } from '../errors';
 import { t } from '../strings.fa';
+import type { TicketDto } from './use-tickets';
 
 export type OrganizationDto = {
 	id: string;
@@ -13,6 +15,29 @@ export type OrganizationDto = {
 	isDefault: boolean;
 	createdAt: string;
 };
+
+export type OrganizationMember = {
+	id: string;
+	slug: string;
+	name: string;
+	email: string;
+	role: Role;
+	createdAt: string;
+};
+
+/** Supervisor only: one organization with its active tickets and everyone in it (D29). */
+export function useOrganization(id: string, enabled: boolean) {
+	return useQuery({
+		queryKey: ['organization', id],
+		queryFn: () =>
+			api<{
+				organization: OrganizationDto;
+				tickets: TicketDto[];
+				users: OrganizationMember[];
+			}>(`/api/organizations/${id}`),
+		enabled,
+	});
+}
 
 export function useOrganizations() {
 	return useQuery({
@@ -40,7 +65,10 @@ export function useSaveOrganization(id?: string) {
 				api(`/api/organizations/${id}`, { method: 'PATCH', json: { name } })
 			:	api('/api/organizations', { method: 'POST', json: { name } }),
 		onSuccess: async () => {
-			await queryClient.invalidateQueries({ queryKey: ['organizations'] });
+			await Promise.all([
+				queryClient.invalidateQueries({ queryKey: ['organizations'] }),
+				queryClient.invalidateQueries({ queryKey: ['organization', id] }),
+			]);
 			toast.success(id ? t.organizations.saved : t.organizations.created);
 		},
 		onError: (err) => toast.danger(errorMessage(err)),

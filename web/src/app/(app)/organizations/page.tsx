@@ -88,13 +88,14 @@ export default function OrganizationsPage() {
 							</span>
 							<div className="min-w-0 flex-1">
 								<p className="flex items-center gap-2">
-									{/* Own direction plus text-right: a Latin name stays on the right and truncates at its end. */}
-									<span
+									{/* The name opens the organization's own page (D29). Own direction plus text-right: a Latin name stays on the right and truncates at its end. */}
+									<Link
+										href={`/organizations/${o.id}`}
 										dir="auto"
-										className="truncate text-right font-medium"
+										className="truncate text-right font-medium hover:underline focus-visible:outline-2 focus-visible:outline-focus"
 									>
 										{o.name}
-									</span>
+									</Link>
 									{o.isDefault && (
 										<Chip
 											size="sm"
@@ -112,7 +113,7 @@ export default function OrganizationsPage() {
 							</div>
 							<div className="flex shrink-0 items-center gap-2">
 								<Link
-									href={`/organizations/${o.id}`}
+									href={`/organizations/${o.id}/edit`}
 									className={buttonVariants({
 										size: 'sm',
 										variant: 'secondary',

@@ -1,4 +1,4 @@
-import { and, count, desc, eq } from 'drizzle-orm';
+import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { tickets, users } from '@/db/schema';
 import { requireUser } from '@/lib/auth';
@@ -28,7 +28,14 @@ export const GET = handle<{ params: Promise<{ slug: string }> }>(
 
 		// An agent only sees the tickets assigned to them (D25); the supervisor sees all, a client only their own.
 		const mine = me.role === 'agent' ? eq(tickets.assigneeId, me.id) : undefined;
-		const ofTarget = and(eq(tickets.userId, target.id), mine);
+		// A client's tickets are the ones they filed; an agent's are the ones assigned to them (D29).
+		const agentProfile = target.role === 'agent';
+		const ofTarget = and(
+			agentProfile ?
+				eq(tickets.assigneeId, target.id)
+			:	eq(tickets.userId, target.id),
+			mine,
+		);
 
 		if (target.id !== me.id) {
 			if (me.role === 'client') throw new HttpError(404, 'not_found');
@@ -59,7 +66,12 @@ export const GET = handle<{ params: Promise<{ slug: string }> }>(
 			.from(tickets)
 			.innerJoin(users, eq(tickets.userId, users.id))
 			.where(ofTarget)
-			.orderBy(desc(tickets.updatedAt), desc(tickets.id))
+			.orderBy(
+				// An agent's profile lists active and closed apart: active first, so the cap never hides one.
+				...(agentProfile ? [asc(sql`${tickets.status} = 'closed'`)] : []),
+				desc(tickets.updatedAt),
+				desc(tickets.id),
+			)
 			.limit(50);
 
 		return Response.json({

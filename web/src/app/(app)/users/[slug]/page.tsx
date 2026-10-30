@@ -55,8 +55,9 @@ export default function UserProfilePage() {
 		);
 	}
 	const { user, stats, tickets } = data;
-	// Staff do not file tickets, so their profile has no stats or list to show.
+	// A client's tickets are the ones they filed, an agent's the ones assigned to them (D29); the supervisor has none.
 	const isClientProfile = user.role === 'client';
+	const isAgentProfile = user.role === 'agent';
 	// Back to the list this profile is in: clients are in /users, agents in the supervisor's /agents (D23).
 	const back =
 		isStaff(me.role) && isClientProfile ?
@@ -118,7 +119,7 @@ export default function UserProfilePage() {
 				)}
 			</section>
 
-			{isClientProfile ?
+			{isClientProfile || isAgentProfile ?
 				<>
 					<section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-5">
 						{[
@@ -143,20 +144,54 @@ export default function UserProfilePage() {
 						))}
 					</section>
 
-					<section className="flex flex-col gap-3">
-						<h2 className="text-lg font-bold">{t.users.ticketsOfUser}</h2>
-						<TicketList
-							tickets={tickets}
-							showPriority={isStaff(me.role)}
-							highlightAttention={isStaff(me.role)}
-							empty={
-								<EmptyBox
-									icon={<TicketIcon size={24} />}
-									title={t.tickets.empty}
+					{isClientProfile ?
+						<section className="flex flex-col gap-3">
+							<h2 className="text-lg font-bold">{t.users.ticketsOfUser}</h2>
+							<TicketList
+								tickets={tickets}
+								showPriority={isStaff(me.role)}
+								highlightAttention={isStaff(me.role)}
+								empty={
+									<EmptyBox
+										icon={<TicketIcon size={24} />}
+										title={t.tickets.empty}
+									/>
+								}
+							/>
+						</section>
+					:	[
+							{
+								title: t.users.activeTickets,
+								items: tickets.filter((x) => x.status !== 'closed'),
+								empty: t.users.noActive,
+							},
+							{
+								title: t.users.closedTickets,
+								items: tickets.filter((x) => x.status === 'closed'),
+								empty: t.users.noClosed,
+							},
+						].map((s) => (
+							<section
+								key={s.title}
+								className="flex flex-col gap-3"
+							>
+								<h2 className="text-lg font-bold">{s.title}</h2>
+								{/* An agent's tickets come from many clients, so each row names its author. */}
+								<TicketList
+									tickets={s.items}
+									showAuthor
+									showPriority
+									highlightAttention
+									empty={
+										<EmptyBox
+											icon={<TicketIcon size={24} />}
+											title={s.empty}
+										/>
+									}
 								/>
-							}
-						/>
-					</section>
+							</section>
+						))
+					}
 				</>
 			:	<p className="max-w-[65ch] rounded-2xl border border-border bg-surface p-4 text-sm leading-relaxed text-muted">
 					{t.users.agentProfileHint}

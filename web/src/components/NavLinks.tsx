@@ -13,6 +13,7 @@ import {
 } from '@phosphor-icons/react';
 import { isStaff } from '@/lib/constants';
 import type { MeUser } from '@/lib/hooks/use-me';
+import { useUserProfile } from '@/lib/hooks/use-users';
 import { t } from '@/lib/strings.fa';
 
 export function NavLinks({
@@ -23,6 +24,20 @@ export function NavLinks({
 	onNavigate?: () => void;
 }) {
 	const pathname = usePathname();
+	// Someone else's profile belongs to "Users", except that the supervisor reaches an agent's profile from
+	// "Agents". The profile page loads the same query, so reading the role here costs no extra request.
+	const otherProfile =
+		pathname.startsWith('/users/') && pathname !== `/users/${me.slug}`;
+	const { data: profile } = useUserProfile(
+		decodeURIComponent(pathname.slice('/users/'.length)),
+		otherProfile && me.role === 'supervisor',
+	);
+	const profileTab =
+		!otherProfile ? null
+		: me.role !== 'supervisor' ? 'users'
+		: !profile ? null // still loading: light neither tab rather than the wrong one
+		: profile.user.role === 'agent' ? 'agents'
+		: 'users';
 
 	const items = [
 		{
@@ -47,10 +62,8 @@ export function NavLinks({
 					href: '/users',
 					label: t.nav.users,
 					icon: UsersThreeIcon,
-					// Other people's profiles belong to "Users"; your own profile is "My profile".
-					match: (p: string) =>
-						p === '/users' ||
-						(p.startsWith('/users/') && p !== `/users/${me.slug}`),
+					// Your own profile is "My profile".
+					match: (p: string) => p === '/users' || profileTab === 'users',
 				},
 			]
 		:	[]),
@@ -60,7 +73,7 @@ export function NavLinks({
 					href: '/agents',
 					label: t.nav.agents,
 					icon: HeadsetIcon,
-					match: (p: string) => p === '/agents',
+					match: (p: string) => p === '/agents' || profileTab === 'agents',
 				},
 				{
 					href: '/organizations',

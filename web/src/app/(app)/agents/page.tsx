@@ -100,6 +100,8 @@ function AgentsView() {
 					>
 						<span className="flex-1">{t.users.colName}</span>
 						<span className="w-40">{t.users.colOrganization}</span>
+						<span className="w-14 text-end">{t.agents.colActive}</span>
+						<span className="w-14 text-end">{t.agents.colClosed}</span>
 					</div>
 					<ul className="divide-y divide-separator overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--surface-shadow)]">
 						{agents.map((a, index) => (
@@ -139,6 +141,22 @@ function AgentsView() {
 									<div className="hidden w-40 sm:block">
 										<OrganizationChip id={a.organizationId} />
 									</div>
+									{[
+										{ label: t.agents.colActive, value: a.activeTickets, strong: true },
+										{ label: t.agents.colClosed, value: a.closedTickets, strong: false },
+									].map((c) => (
+										<div
+											key={c.label}
+											className="w-14 shrink-0 text-end"
+										>
+											<p
+												className={`text-lg tabular-nums leading-none ${c.strong && c.value > 0 ? 'font-bold' : 'text-muted'}`}
+											>
+												{c.value.toLocaleString('fa-IR')}
+											</p>
+											<p className="mt-1 text-xs text-muted sm:sr-only">{c.label}</p>
+										</div>
+									))}
 								</Link>
 							</li>
 						))}

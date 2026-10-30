@@ -16,7 +16,10 @@ export type UserRow = {
 	openTickets: number;
 };
 
-export type AgentRow = Omit<UserRow, 'openTickets'>;
+export type AgentRow = Omit<UserRow, 'openTickets'> & {
+	activeTickets: number;
+	closedTickets: number;
+};
 
 export type UserProfile = {
 	user: {
@@ -56,9 +59,10 @@ export function useAgents(q: string, enabled: boolean) {
 	});
 }
 
-export function useUserProfile(slug: string) {
+export function useUserProfile(slug: string, enabled = true) {
 	return useQuery({
 		queryKey: ['user', slug],
 		queryFn: () => api<UserProfile>(`/api/users/${slug}`),
+		enabled,
 	});
 }
