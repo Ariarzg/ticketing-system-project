@@ -11,6 +11,7 @@ import {
 	UsersIcon,
 } from '@phosphor-icons/react';
 import { EmptyBox } from '@/components/EmptyBox';
+import { ExportButtons } from '@/components/ExportButtons';
 import { PageHeader } from '@/components/PageHeader';
 import { TicketList, TicketListSkeleton } from '@/components/TicketList';
 import { ApiError } from '@/lib/api-client';
@@ -71,13 +72,19 @@ export default function OrganizationPage() {
 							</span>
 						}
 						actions={
-							<Link
-								href={`/organizations/${id}/edit`}
-								className={buttonVariants({ variant: 'secondary' })}
-							>
-								<PencilSimpleIcon size={18} />
-								{t.organizations.edit}
-							</Link>
+							<div className="flex flex-wrap items-center gap-2">
+								<ExportButtons
+									pdf={`/print/organizations/${id}`}
+									csv={`/api/organizations/${id}/export?format=csv`}
+								/>
+								<Link
+									href={`/organizations/${id}/edit`}
+									className={buttonVariants({ size: 'sm', variant: 'secondary' })}
+								>
+									<PencilSimpleIcon size={16} />
+									{t.organizations.edit}
+								</Link>
+							</div>
 						}
 					/>
 

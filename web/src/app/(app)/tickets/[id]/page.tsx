@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Skeleton, toast } from '@heroui/react';
 import { ArrowRightIcon } from '@phosphor-icons/react';
 import { StatusChip } from '@/components/chips';
+import { ExportButtons } from '@/components/ExportButtons';
 import { Thread } from '@/components/Thread';
 import { TicketInfo } from '@/components/TicketInfo';
 import { ApiError } from '@/lib/api-client';
@@ -55,13 +56,16 @@ export default function TicketPage() {
 	return (
 		<div className="flex flex-col gap-5">
 			<div>
-				<Link
-					href="/tickets"
-					className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
-				>
-					<ArrowRightIcon size={16} />
-					{t.tickets.back}
-				</Link>
+				<div className="flex flex-wrap items-center justify-between gap-3">
+					<Link
+						href="/tickets"
+						className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
+					>
+						<ArrowRightIcon size={16} />
+						{t.tickets.back}
+					</Link>
+					<ExportButtons pdf={`/print/tickets/${ticket.id}`} />
+				</div>
 				{/* dir="auto" keeps an English title in its own order; text-right keeps it on the page's side. */}
 				<h1
 					dir="auto"

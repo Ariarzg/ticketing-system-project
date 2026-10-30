@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Avatar, Skeleton, toast } from '@heroui/react';
 import { ArrowRightIcon, TicketIcon } from '@phosphor-icons/react';
 import { EmptyBox } from '@/components/EmptyBox';
+import { ExportButtons } from '@/components/ExportButtons';
 import { PromoteButton } from '@/components/PromoteButton';
 import { TicketList } from '@/components/TicketList';
 import { ApiError } from '@/lib/api-client';
@@ -109,12 +110,19 @@ export default function UserProfilePage() {
 					</div>
 				</div>
 				{/* ms-auto: at the end of the row on wide screens; on a phone it wraps below the name. */}
-				{me.role === 'supervisor' && isClientProfile && (
-					<div className="ms-auto">
-						<PromoteButton
-							slug={user.slug}
-							hasTickets={stats.total > 0}
+				{(isClientProfile || isAgentProfile) && (
+					<div className="ms-auto flex flex-wrap items-center gap-2">
+						{/* The report holds what this viewer sees here (D30). */}
+						<ExportButtons
+							pdf={`/print/users/${user.slug}`}
+							csv={`/api/users/${user.slug}/export?format=csv`}
 						/>
+						{me.role === 'supervisor' && isClientProfile && (
+							<PromoteButton
+								slug={user.slug}
+								hasTickets={stats.total > 0}
+							/>
+						)}
 					</div>
 				)}
 			</section>

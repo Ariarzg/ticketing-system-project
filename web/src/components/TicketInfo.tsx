@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Avatar } from '@heroui/react';
 import { isStaff } from '@/lib/constants';
+import { ticketRef } from '@/lib/reports';
 import { formatDate } from '@/lib/dates';
 import type { MeUser } from '@/lib/hooks/use-me';
 import type { TicketDto } from '@/lib/hooks/use-tickets';
@@ -24,11 +25,6 @@ function Row({
 			<dd className="min-w-0 text-sm">{children}</dd>
 		</div>
 	);
-}
-
-/** A short reference people can quote ("#91DEC946"): the start of the ticket's id. */
-export function ticketRef(id: string): string {
-	return `#${id.slice(0, 8).toUpperCase()}`;
 }
 
 /** The side panel of a ticket: its facts, for staff the priority, agent and status buttons, and for the supervisor the assign panel. */

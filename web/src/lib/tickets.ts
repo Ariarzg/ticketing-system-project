@@ -1,11 +1,20 @@
-import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
+import {
+	and,
+	asc,
+	count,
+	eq,
+	inArray,
+	isNull,
+	or,
+	type SQL,
+} from 'drizzle-orm';
 import { db } from '@/db';
 import { attachments, messages, tickets, users } from '@/db/schema';
 import type { SessionUser } from './auth';
 import type { AttachmentDto } from './files';
 import { HttpError } from './http';
 import { TransitionError, transition, type TicketAction } from './lifecycle';
-import type { Priority, Role, Status } from './constants';
+import { STATUSES, type Priority, type Role, type Status } from './constants';
 
 /** The columns every ticket response contains (ticket + author). */
 export const ticketColumns = {
@@ -67,6 +76,21 @@ export async function ticketFiles(ticketId: string) {
 		byOwner.set(messageId, [...(byOwner.get(messageId) ?? []), file]);
 	}
 	return byOwner;
+}
+
+/** How many of these tickets are in each status, and in total. */
+export async function ticketStats(where: SQL | undefined) {
+	const rows = await db
+		.select({ status: tickets.status, n: count() })
+		.from(tickets)
+		.where(where)
+		.groupBy(tickets.status);
+	const stats = Object.fromEntries(STATUSES.map((s) => [s, 0])) as Record<
+		Status,
+		number
+	>;
+	for (const row of rows) stats[row.status] = row.n;
+	return { ...stats, total: rows.reduce((sum, row) => sum + row.n, 0) };
 }
 
 /** One ticket the user is allowed to see, or a 404. */
