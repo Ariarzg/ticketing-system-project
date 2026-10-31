@@ -1,4 +1,3 @@
-// file: src/components/NavLinks.tsx
 'use client';
 
 import Link from 'next/link';
@@ -6,9 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
 	BuildingsIcon,
 	HeadsetIcon,
-	PlusCircleIcon,
 	TicketIcon,
-	UserCircleIcon,
 	UsersThreeIcon,
 } from '@phosphor-icons/react';
 import { isStaff } from '@/lib/constants';
@@ -39,23 +36,14 @@ export function NavLinks({
 		: profile.user.role === 'agent' ? 'agents'
 		: 'users';
 
+	// "New ticket" is the list's own primary button and your profile is the user block under the nav, so neither repeats here.
 	const items = [
 		{
 			href: '/tickets',
 			label: t.nav.tickets,
 			icon: TicketIcon,
-			match: (p: string) => p === '/tickets' || /^\/tickets\/(?!new)/.test(p),
+			match: (p: string) => p === '/tickets' || p.startsWith('/tickets/'),
 		},
-		...(me.role === 'client' ?
-			[
-				{
-					href: '/tickets/new',
-					label: t.nav.newTicket,
-					icon: PlusCircleIcon,
-					match: (p: string) => p === '/tickets/new',
-				},
-			]
-		:	[]),
 		...(isStaff(me.role) ?
 			[
 				{
@@ -84,12 +72,6 @@ export function NavLinks({
 				},
 			]
 		:	[]),
-		{
-			href: `/users/${me.slug}`,
-			label: t.nav.myProfile,
-			icon: UserCircleIcon,
-			match: (p: string) => p === `/users/${me.slug}`,
-		},
 	];
 
 	return (

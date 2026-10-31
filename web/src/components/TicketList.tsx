@@ -1,34 +1,43 @@
 'use client';
 
+import { Fragment } from 'react';
 import Link from 'next/link';
-import { Avatar, Skeleton } from '@heroui/react';
+import { Skeleton } from '@heroui/react';
 import { ATTENTION_STATUSES } from '@/lib/constants';
 import { formatDate, formatRelative } from '@/lib/dates';
+import { useMe } from '@/lib/hooks/use-me';
 import type { TicketDto } from '@/lib/hooks/use-tickets';
-import { initials } from '@/lib/initials';
 import { t } from '@/lib/strings.fa';
+import { AssigneeName } from './AssignPanel';
 import { PriorityChip, StatusChip } from './chips';
-import { OrganizationName } from './OrganizationChip';
 
 /**
- * One row per ticket. The whole row is the link, so it works with keyboard and touch.
- * Rows that wait for an agent get an accent bar on the start edge (and screen-reader text),
- * so they stand out without shouting.
+ * One row per ticket: the title, then one line of facts that starts with the status. The whole row is the
+ * link, so it works with keyboard and touch. Rows that wait for the viewing agent get a dot before the title
+ * (and screen-reader text), the way unread mail does.
  */
 export function TicketList({
 	tickets,
 	showAuthor = false,
 	showPriority = false,
+	showAssignee = false,
 	highlightAttention = false,
+	hideStatus = false,
 	empty,
 }: {
 	tickets: TicketDto[];
 	showAuthor?: boolean;
-	/** Staff only: clients never see the priority (D26). */
+	/** Staff only: clients never see the priority (D26). Only "high" is shown; the others are the quiet default. */
 	showPriority?: boolean;
+	/** Supervisor only: who has the ticket, or that nobody has it yet (D25). */
+	showAssignee?: boolean;
 	highlightAttention?: boolean;
+	/** When the list is already filtered to one status, every row would repeat it. */
+	hideStatus?: boolean;
 	empty?: React.ReactNode;
 }) {
+	const { data: me } = useMe();
+
 	if (tickets.length === 0) {
 		return (
 			<div className="rounded-2xl border border-border bg-surface">{empty}</div>
@@ -37,71 +46,83 @@ export function TicketList({
 
 	return (
 		<ul className="divide-y divide-separator overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--surface-shadow)]">
-			{tickets.map((ticket, index) => {
+			{tickets.map((ticket) => {
 				const needsAttention =
 					highlightAttention &&
 					(ATTENTION_STATUSES as readonly string[]).includes(ticket.status);
-				return (
-					<li
-						key={ticket.id}
-						className="rise"
-						style={{ '--i': Math.min(index, 8) } as React.CSSProperties}
+				const facts = [
+					showAuthor && (
+						<span
+							dir="auto"
+							className="truncate"
+						>
+							{ticket.authorName}
+						</span>
+					),
+					showAssignee &&
+						(ticket.assigneeId && me ?
+							<span
+								dir="auto"
+								className="truncate"
+							>
+								<AssigneeName
+									id={ticket.assigneeId}
+									me={me}
+								/>
+							</span>
+						:	<span className="text-warning-soft-foreground">
+								{t.filters.unassigned}
+							</span>),
+					<time
+						key="time"
+						dateTime={ticket.updatedAt}
+						title={formatDate(ticket.updatedAt)}
+						className="shrink-0"
 					>
+						{formatRelative(ticket.updatedAt)}
+					</time>,
+				].filter(Boolean);
+				return (
+					<li key={ticket.id}>
 						<Link
 							href={`/tickets/${ticket.id}`}
-							className={`group flex flex-col gap-2 border-s-[3px] px-4 py-3.5 transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus sm:flex-row sm:items-center sm:gap-4 ${
-								needsAttention ? 'border-s-accent' : 'border-s-transparent'
-							}`}
+							className="relative flex flex-col gap-1.5 px-4 py-3.5 transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus sm:px-5"
 						>
-							<div className="min-w-0 flex-1">
+							{needsAttention && (
+								<span
+									aria-hidden
+									className="absolute start-1.5 top-[1.3rem] size-2 rounded-full bg-accent-soft-foreground sm:start-2"
+								/>
+							)}
+							{/* dir="auto" keeps an English title in its own order; text-right keeps every title on the same side. */}
+							<p
+								dir="auto"
+								className="line-clamp-2 text-right font-medium sm:line-clamp-1"
+							>
 								{needsAttention && (
 									<span className="sr-only">{t.tickets.needsAttention}: </span>
 								)}
-								{/* dir="auto" keeps an English title in its own order; text-right keeps every title on the same side. */}
-								<p
-									dir="auto"
-									className={`truncate text-right ${needsAttention ? 'font-bold' : 'font-medium'}`}
-								>
-									{ticket.title}
-								</p>
-								<div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-									{showAuthor && (
-										<span className="inline-flex items-center gap-1.5">
-											<Avatar
-												size="sm"
-												className="size-6 text-xs"
-											>
-												<Avatar.Fallback>
-													{initials(ticket.authorName)}
-												</Avatar.Fallback>
-											</Avatar>
-											{ticket.authorName}
-										</span>
-									)}
-									{showAuthor && (
-										<span>
-											<OrganizationName id={ticket.organizationId} />
-										</span>
-									)}
-									<time
-										dateTime={ticket.updatedAt}
-										title={formatDate(ticket.updatedAt)}
-									>
-										{formatRelative(ticket.updatedAt)}
-									</time>
-								</div>
-							</div>
-							<div className="flex shrink-0 items-center gap-2">
-								{showPriority && (
+								{ticket.title}
+							</p>
+							<div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+								{!hideStatus && (
+									<StatusChip
+										status={ticket.status}
+										withLabel
+									/>
+								)}
+								{showPriority && ticket.priority === 'high' && (
 									<PriorityChip
 										priority={ticket.priority}
 										withLabel
 									/>
 								)}
-								<StatusChip
-									status={ticket.status}
-									withLabel
-								/>
+								{facts.map((fact, i) => (
+									<Fragment key={i}>
+										{i > 0 && <span aria-hidden>·</span>}
+										{fact}
+									</Fragment>
+								))}
 							</div>
 						</Link>
 					</li>
@@ -118,14 +139,13 @@ export function TicketListSkeleton({ rows = 6 }: { rows?: number }) {
 			{Array.from({ length: rows }, (_, i) => (
 				<div
 					key={i}
-					className="flex items-center gap-4 px-4 py-4"
+					className="space-y-2.5 px-4 py-4 sm:px-5"
 				>
-					<div className="flex-1 space-y-2">
-						<Skeleton className="h-4 w-2/3 rounded-lg" />
-						<Skeleton className="h-3 w-1/3 rounded-lg" />
+					<Skeleton className="h-4 w-2/3 rounded-lg" />
+					<div className="flex items-center gap-2">
+						<Skeleton className="h-5 w-14 rounded-full" />
+						<Skeleton className="h-3 w-32 rounded-lg" />
 					</div>
-					<Skeleton className="h-6 w-14 rounded-full" />
-					<Skeleton className="h-6 w-16 rounded-full" />
 				</div>
 			))}
 		</div>

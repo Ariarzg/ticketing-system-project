@@ -1,4 +1,3 @@
-// file: src/app/(app)/users/page.tsx
 'use client';
 
 import { Suspense, useEffect, useRef } from 'react';
@@ -106,12 +105,8 @@ function UsersView() {
 						<span className="w-20 text-end">{t.users.colOpen}</span>
 					</div>
 					<ul className="divide-y divide-separator overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--surface-shadow)]">
-						{users.map((u, index) => (
-							<li
-								key={u.id}
-								className="rise"
-								style={{ '--i': Math.min(index, 8) } as React.CSSProperties}
-							>
+						{users.map((u) => (
+							<li key={u.id}>
 								<Link
 									href={`/users/${u.slug}`}
 									className="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"

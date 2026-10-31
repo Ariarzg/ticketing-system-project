@@ -1,4 +1,3 @@
-// file: src/components/chips.tsx
 import { Chip } from '@heroui/react';
 import {
 	CellSignalHighIcon,

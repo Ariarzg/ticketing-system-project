@@ -1,4 +1,3 @@
-// file: src/app/api/auth/signup/route.ts
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { organizations, users } from '@/db/schema';

@@ -1,4 +1,3 @@
-// file: src/app/api/organizations/[id]/route.ts
 import { and, desc, eq, ne } from 'drizzle-orm';
 import { db } from '@/db';
 import { organizations, tickets, users } from '@/db/schema';

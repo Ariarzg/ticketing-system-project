@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, Button, Drawer, Skeleton, toast, useOverlayState } from "@heroui/react";
 import { ListIcon, SignOutIcon } from "@phosphor-icons/react";
@@ -15,18 +16,45 @@ import { useMe, type MeUser } from "@/lib/hooks/use-me";
 import { initials } from "@/lib/initials";
 import { t } from "@/lib/strings.fa";
 
-function UserBlock({ me, onLogout, loggingOut }: { me: MeUser; onLogout: () => void; loggingOut: boolean }) {
+/** Who is signed in. The name opens your own profile; the theme toggle and logout sit beside it. */
+function UserBlock({
+  me,
+  onLogout,
+  loggingOut,
+  onNavigate,
+  withTheme = true,
+}: {
+  me: MeUser;
+  onLogout: () => void;
+  loggingOut: boolean;
+  onNavigate?: () => void;
+  /** The phone drawer leaves it out: the top bar already has one. */
+  withTheme?: boolean;
+}) {
+  const href = `/users/${me.slug}`;
+  const active = usePathname() === href;
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3">
-      <Avatar size="sm" color="accent" variant="soft">
-        <Avatar.Fallback>{initials(me.name)}</Avatar.Fallback>
-      </Avatar>
-      <div className="min-w-0 flex-1">
-        <p dir="auto" className="truncate text-right text-sm font-semibold">
-          {me.name}
-        </p>
-        <p className="text-xs text-muted">{t.role[me.role]}</p>
-      </div>
+    <div className="flex items-center gap-1 rounded-2xl border border-border bg-surface p-1.5">
+      <Link
+        href={href}
+        onClick={onNavigate}
+        aria-label={`${t.nav.myProfile}: ${me.name}`}
+        aria-current={active ? "page" : undefined}
+        className={`flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1.5 transition-colors ${
+          active ? "bg-accent-soft" : "hover:bg-surface-secondary"
+        }`}
+      >
+        <Avatar size="sm" color="accent" variant="soft">
+          <Avatar.Fallback>{initials(me.name)}</Avatar.Fallback>
+        </Avatar>
+        <span className="min-w-0 flex-1">
+          <span dir="auto" className="block truncate text-right text-sm font-semibold">
+            {me.name}
+          </span>
+          <span className="block text-xs text-muted">{t.role[me.role]}</span>
+        </span>
+      </Link>
+      {withTheme && <ThemeToggle />}
       <LoadingButton
         isIconOnly
         size="sm"
@@ -98,11 +126,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Logo />
         </div>
         <NavLinks me={me} />
-        <div className="mt-auto flex flex-col gap-3">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-xs text-muted">{t.theme.label}</span>
-            <ThemeToggle />
-          </div>
+        <div className="mt-auto">
           <UserBlock me={me} onLogout={logout} loggingOut={loggingOut} />
         </div>
       </aside>
@@ -126,7 +150,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Drawer.Body className="flex flex-col gap-6">
                   <NavLinks me={me} onNavigate={drawer.close} />
                   <div className="mt-auto">
-                    <UserBlock me={me} onLogout={logout} loggingOut={loggingOut} />
+                    <UserBlock
+                      me={me}
+                      onLogout={logout}
+                      loggingOut={loggingOut}
+                      onNavigate={drawer.close}
+                      withTheme={false}
+                    />
                   </div>
                 </Drawer.Body>
               </Drawer.Dialog>

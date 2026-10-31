@@ -1,4 +1,3 @@
-// file: src/app/(auth)/signup/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -70,7 +69,9 @@ export default function SignupPage() {
 					{t.auth.signupHint}
 				</p>
 			</div>
+			{/* POST: a submit before hydration must never put the password in the URL. */}
 			<form
+				method="post"
 				onSubmit={onSubmit}
 				className="flex flex-col gap-4"
 			>

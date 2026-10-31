@@ -38,11 +38,9 @@ export default function LoginPage() {
   // No isRequired here: two fields need no asterisks. `validate` still blocks an empty submit with a Persian message.
   return (
     <>
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t.auth.loginTitle}</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted">{t.auth.loginHint}</p>
-      </div>
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <h1 className="text-3xl font-bold tracking-tight">{t.auth.loginTitle}</h1>
+      {/* POST: a submit before hydration must never put the password in the URL. */}
+      <form method="post" onSubmit={onSubmit} className="flex flex-col gap-4">
         <TextField fullWidth name="email" type="email" value={email} onChange={setEmail} validate={checkEmail}>
           <Label>{t.auth.email}</Label>
           <Input dir="ltr" autoComplete="email" spellCheck={false} placeholder="name@example.com" />

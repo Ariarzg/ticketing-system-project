@@ -1,4 +1,3 @@
-// file: src/app/api/agents/route.ts
 import { and, asc, eq, ilike, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/db';

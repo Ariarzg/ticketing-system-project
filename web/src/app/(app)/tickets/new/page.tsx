@@ -18,9 +18,9 @@ import { t } from "@/lib/strings.fa";
 const TITLE_MAX = 120;
 const DESCRIPTION_MAX = 5000;
 
-/** "۲۵ از ۱۲۰": how much of the limit is used. */
+/** "۱۰۵ از ۱۲۰": how much of the limit is used, shown only once the limit is near (80%), so it does not sit there as noise. */
 function counter(length: number, max: number) {
-  return `${length.toLocaleString("fa-IR")} از ${max.toLocaleString("fa-IR")}`;
+  return length >= max * 0.8 ? `${length.toLocaleString("fa-IR")} از ${max.toLocaleString("fa-IR")}` : null;
 }
 
 export default function NewTicketPage() {
@@ -81,7 +81,9 @@ export default function NewTicketPage() {
           <Label>{t.tickets.fieldTitle}</Label>
           {/* Empty, dir="auto" would turn the Persian placeholder left-to-right. */}
           <Input dir={title ? "auto" : "rtl"} placeholder={t.tickets.titlePlaceholder} />
-          <Description className="tabular-nums">{counter(title.length, TITLE_MAX)}</Description>
+          {counter(title.length, TITLE_MAX) && (
+            <Description className="tabular-nums">{counter(title.length, TITLE_MAX)}</Description>
+          )}
           <FieldError />
         </TextField>
         <TextField

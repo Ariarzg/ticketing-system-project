@@ -12,6 +12,7 @@ import {
 } from '@phosphor-icons/react';
 import { EmptyBox } from '@/components/EmptyBox';
 import { ExportButtons } from '@/components/ExportButtons';
+import { LoadError } from '@/components/LoadError';
 import { PageHeader } from '@/components/PageHeader';
 import { TicketList, TicketListSkeleton } from '@/components/TicketList';
 import { ApiError } from '@/lib/api-client';
@@ -26,7 +27,7 @@ export default function OrganizationPage() {
 	const { id } = useParams<{ id: string }>();
 	const router = useRouter();
 	const isSupervisor = useSupervisorOnly();
-	const { data, error } = useOrganization(id, isSupervisor);
+	const { data, error, refetch, isFetching } = useOrganization(id, isSupervisor);
 	// Strict Mode runs mount effects twice in dev; warn only once
 	const warned = useRef(false);
 
@@ -38,19 +39,35 @@ export default function OrganizationPage() {
 		}
 	}, [error, router]);
 
+	// The organization is loaded in the browser, so its name cannot come from metadata (see the ticket page).
+	const name = data?.organization.name;
+	useEffect(() => {
+		if (!name) return;
+		const before = document.title;
+		document.title = `${name} · ${t.appName}`;
+		return () => {
+			document.title = before;
+		};
+	}, [name]);
+
 	if (!isSupervisor) return null;
 
 	return (
 		<div className="flex flex-col gap-6">
 			<Link
 				href="/organizations"
-				className="inline-flex w-fit items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
+				className="-my-2 inline-flex w-fit items-center gap-1.5 py-2 text-sm text-muted transition-colors hover:text-foreground"
 			>
 				<ArrowRightIcon size={16} />
 				{t.organizations.back}
 			</Link>
 
-			{!data ?
+			{error && !(error instanceof ApiError && error.status === 404) && !data ?
+				<LoadError
+					onRetry={() => refetch()}
+					retrying={isFetching}
+				/>
+			: !data ?
 				<>
 					<Skeleton className="h-9 w-64 rounded-lg" />
 					<TicketListSkeleton rows={3} />
@@ -91,6 +108,7 @@ export default function OrganizationPage() {
 					<section className="flex flex-col gap-3">
 						<h2 className="text-lg font-bold">
 							{t.organizations.activeTickets}
+							<span className="sr-only">: </span>
 							<span className="ms-2 text-sm font-normal text-muted tabular-nums">
 								{data.tickets.length.toLocaleString('fa-IR')}
 							</span>
@@ -99,7 +117,7 @@ export default function OrganizationPage() {
 							tickets={data.tickets}
 							showAuthor
 							showPriority
-							highlightAttention
+							showAssignee
 							empty={
 								<EmptyBox
 									icon={<TicketIcon size={24} />}
@@ -112,6 +130,7 @@ export default function OrganizationPage() {
 					<section className="flex flex-col gap-3">
 						<h2 className="text-lg font-bold">
 							{t.organizations.members}
+							<span className="sr-only">: </span>
 							<span className="ms-2 text-sm font-normal text-muted tabular-nums">
 								{data.users.length.toLocaleString('fa-IR')}
 							</span>
@@ -151,14 +170,17 @@ export default function OrganizationPage() {
 													{u.email}
 												</p>
 											</div>
-											<Chip
-												size="sm"
-												color={isStaff(u.role) ? 'accent' : 'default'}
-												variant="soft"
-												className="shrink-0"
-											>
-												{t.role[u.role]}
-											</Chip>
+											{/* Most members are clients, so only staff get a chip. */}
+											{isStaff(u.role) && (
+												<Chip
+													size="sm"
+													color="accent"
+													variant="soft"
+													className="shrink-0"
+												>
+													{t.role[u.role]}
+												</Chip>
+											)}
 										</Link>
 									</li>
 								))}

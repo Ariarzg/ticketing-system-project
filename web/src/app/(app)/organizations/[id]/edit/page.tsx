@@ -1,4 +1,3 @@
-// file: src/app/(app)/organizations/[id]/page.tsx
 'use client';
 
 import { useEffect, useRef } from 'react';
@@ -42,6 +41,7 @@ export default function EditOrganizationPage() {
 				initialName={organization.name}
 				submitLabel={t.organizations.save}
 				isPending={save.isPending}
+				cancelHref={`/organizations/${id}`}
 				onSubmit={(name) =>
 					save.mutate(name, {
 						onSuccess: () => router.push(`/organizations/${id}`),

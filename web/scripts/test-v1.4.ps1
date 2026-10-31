@@ -96,7 +96,11 @@ Review $m4.id @{ action = "deny" } $sup
 Review $m4.id @{ action = "confirm" } $sup ([guid]::NewGuid().ToString())
 Review ([guid]::NewGuid().ToString()) @{ action = "confirm" } $sup
 
-Check "9. Client messages carry no review data (expect: True), and once nothing waits the ticket leaves the view and can close (expect: False, ok)"
+Check "9. While a reply waits, the agent cannot mark the ticket answered (expect: 409 pending_review), and the status stays (expect: in_progress)"
+Try-Api { Invoke-RestMethod -Uri "$h/api/tickets/$tid/status" -Method Patch -Body (@{ status = "answered" } | ConvertTo-Json) -ContentType $json -WebSession $agt }
+Status $sup
+
+Check "10. Client messages carry no review data (expect: True), and once nothing waits the ticket leaves the view and can close (expect: False, ok)"
 Review $m4.id @{ action = "confirm" } $sup | Out-Null
 [bool](-not ((Messages $cli) | Where-Object { $_.review }))
 [bool]((Invoke-RestMethod -Uri "$h/api/tickets?review=1" -WebSession $sup).items | Where-Object id -eq $tid)

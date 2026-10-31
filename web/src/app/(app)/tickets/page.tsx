@@ -1,4 +1,3 @@
-// file: src/app/(app)/tickets/page.tsx
 'use client';
 
 import { Suspense } from 'react';
@@ -38,6 +37,7 @@ function TicketsView() {
 	const staff = !!me && isStaff(me.role);
 	const supervisor = me?.role === 'supervisor';
 	const agent = me?.role === 'agent';
+	const status = searchParams.get('status');
 	const isFiltered = [
 		'status',
 		'priority',
@@ -87,11 +87,6 @@ function TicketsView() {
 					: agent ? t.tickets.assignedTitle
 					: t.tickets.myTitle
 				}
-				description={
-					supervisor ? t.tickets.allHint
-					: agent ? t.tickets.assignedHint
-					: t.tickets.myHint
-				}
 				actions={newTicketButton}
 			/>
 
@@ -99,8 +94,7 @@ function TicketsView() {
 				<TicketFilters
 					params={new URLSearchParams(searchParams.toString())}
 					setParams={setParams}
-					isAgent={staff}
-					isSupervisor={supervisor}
+					role={me.role}
 					statusCounts={data?.statusCounts}
 					attentionCount={data?.attentionCount}
 					unassignedCount={data?.unassignedCount}
@@ -120,7 +114,11 @@ function TicketsView() {
 						tickets={data.items}
 						showAuthor={staff}
 						showPriority={staff}
-						highlightAttention={staff}
+						// In the "no agent yet" queue every row would say so.
+						showAssignee={supervisor && searchParams.get('unassigned') !== '1'}
+						// Only an agent replies, so only an agent's list marks what waits for a reply (D4).
+						highlightAttention={agent}
+						hideStatus={!!status}
 						empty={
 							isFiltered ?
 								<EmptyBox
@@ -165,7 +163,10 @@ function TicketsView() {
 			)}
 
 			{totalPages > 1 && (
-				<Pagination className="justify-center">
+				<Pagination
+					aria-label={t.filters.pagination}
+					className="justify-center"
+				>
 					<Pagination.Content>
 						<Pagination.Item>
 							<Pagination.Previous

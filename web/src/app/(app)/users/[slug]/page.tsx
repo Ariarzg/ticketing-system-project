@@ -1,4 +1,3 @@
-// file: src/app/(app)/users/[slug]/page.tsx
 'use client';
 
 import { useEffect } from 'react';
@@ -8,6 +7,7 @@ import { Avatar, Skeleton, toast } from '@heroui/react';
 import { ArrowRightIcon, TicketIcon } from '@phosphor-icons/react';
 import { EmptyBox } from '@/components/EmptyBox';
 import { ExportButtons } from '@/components/ExportButtons';
+import { LoadError } from '@/components/LoadError';
 import { PromoteButton } from '@/components/PromoteButton';
 import { TicketList } from '@/components/TicketList';
 import { ApiError } from '@/lib/api-client';
@@ -23,7 +23,7 @@ export default function UserProfilePage() {
 	const { slug } = useParams<{ slug: string }>();
 	const router = useRouter();
 	const { data: me } = useMe();
-	const { data, error } = useUserProfile(slug);
+	const { data, error, refetch, isFetching } = useUserProfile(slug);
 
 	useEffect(() => {
 		if (error instanceof ApiError && error.status === 404 && me) {
@@ -46,6 +46,15 @@ export default function UserProfilePage() {
 		};
 	}, [name]);
 
+	if (error && !(error instanceof ApiError && error.status === 404) && !data) {
+		return (
+			<LoadError
+				onRetry={() => refetch()}
+				retrying={isFetching}
+			/>
+		);
+	}
+
 	if (!data || !me) {
 		return (
 			<div className="space-y-5">
@@ -59,6 +68,9 @@ export default function UserProfilePage() {
 	// A client's tickets are the ones they filed, an agent's the ones assigned to them (D29); the supervisor has none.
 	const isClientProfile = user.role === 'client';
 	const isAgentProfile = user.role === 'agent';
+	// Your own tickets are on /tickets with their counts, so your own profile is only about the account.
+	const own = user.id === me.id;
+	const viewerIsAgent = me.role === 'agent';
 	// Back to the list this profile is in: clients are in /users, agents in the supervisor's /agents (D23).
 	const back =
 		isStaff(me.role) && isClientProfile ?
@@ -72,7 +84,7 @@ export default function UserProfilePage() {
 			{back && (
 				<Link
 					href={back.href}
-					className="inline-flex w-fit items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
+					className="-my-2 inline-flex w-fit items-center gap-1.5 py-2 text-sm text-muted transition-colors hover:text-foreground"
 				>
 					<ArrowRightIcon size={16} />
 					{back.label}
@@ -103,7 +115,6 @@ export default function UserProfilePage() {
 							{user.email}
 						</span>
 						<OrganizationChip id={user.organizationId} />
-						<span>{t.role[user.role]}</span>
 						<span>
 							{t.users.joined}: {formatDay(user.createdAt)}
 						</span>
@@ -127,46 +138,39 @@ export default function UserProfilePage() {
 				)}
 			</section>
 
-			{isClientProfile || isAgentProfile ?
+			{!own && (isClientProfile || isAgentProfile) && (
 				<>
-					<section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-5">
+					{/* One line of counts: the list below holds the tickets themselves. */}
+					<ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
 						{[
-							{ label: t.users.statTotal, value: stats.total, strong: true },
-							...STATUSES.map((s) => ({
-								label: t.status[s],
-								value: stats[s],
-								strong: false,
-							})),
+							{ label: t.users.statTotal, value: stats.total },
+							...STATUSES.map((s) => ({ label: t.status[s], value: stats[s] })),
 						].map((item) => (
-							<div
+							<li
 								key={item.label}
-								className="bg-surface px-4 py-4"
+								className="flex items-baseline gap-1.5"
 							>
-								<p
-									className={`text-2xl font-bold tabular-nums leading-none ${item.strong ? 'text-accent-soft-foreground' : ''}`}
-								>
+								<span className="text-lg font-bold tabular-nums text-foreground">
 									{item.value.toLocaleString('fa-IR')}
-								</p>
-								<p className="mt-2 text-xs text-muted">{item.label}</p>
-							</div>
+								</span>
+								{item.label}
+							</li>
 						))}
-					</section>
+					</ul>
 
 					{isClientProfile ?
-						<section className="flex flex-col gap-3">
-							<h2 className="text-lg font-bold">{t.users.ticketsOfUser}</h2>
-							<TicketList
-								tickets={tickets}
-								showPriority={isStaff(me.role)}
-								highlightAttention={isStaff(me.role)}
-								empty={
-									<EmptyBox
-										icon={<TicketIcon size={24} />}
-										title={t.tickets.empty}
-									/>
-								}
-							/>
-						</section>
+						<TicketList
+							tickets={tickets}
+							showPriority={isStaff(me.role)}
+							showAssignee={me.role === 'supervisor'}
+							highlightAttention={viewerIsAgent}
+							empty={
+								<EmptyBox
+									icon={<TicketIcon size={24} />}
+									title={t.tickets.empty}
+								/>
+							}
+						/>
 					:	[
 							{
 								title: t.users.activeTickets,
@@ -189,7 +193,7 @@ export default function UserProfilePage() {
 									tickets={s.items}
 									showAuthor
 									showPriority
-									highlightAttention
+									highlightAttention={viewerIsAgent}
 									empty={
 										<EmptyBox
 											icon={<TicketIcon size={24} />}
@@ -201,10 +205,7 @@ export default function UserProfilePage() {
 						))
 					}
 				</>
-			:	<p className="max-w-[65ch] rounded-2xl border border-border bg-surface p-4 text-sm leading-relaxed text-muted">
-					{t.users.agentProfileHint}
-				</p>
-			}
+			)}
 		</div>
 	);
 }

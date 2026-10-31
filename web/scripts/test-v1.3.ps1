@@ -89,7 +89,7 @@ Invoke-RestMethod -Uri "$h/api/tickets/$tid/messages" -Method Post -Body (@{ bod
 Invoke-RestMethod -Uri "$h/api/tickets/$tid/messages" -Method Post -Body (@{ body = "Client reply" } | ConvertTo-Json) -ContentType $json -WebSession $ali | Out-Null
 (Ticket $tid $sup).status
 
-Check "9. The supervisor still changes status (expect: ok, then answered)"
+Check "9. The supervisor still changes status (expect: 409 pending_review, then in_progress: since v1.4 agent A's reply still waits for review, D27)"
 Try-Api { Invoke-RestMethod -Uri "$h/api/tickets/$tid/status" -Method Patch -Body (@{ status = "answered" } | ConvertTo-Json) -ContentType $json -WebSession $sup }
 (Ticket $tid $sup).status
 

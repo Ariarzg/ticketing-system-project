@@ -1,4 +1,3 @@
-// file: src/app/api/users/[slug]/promote/route.ts
 import { count, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { organizations, tickets, users } from '@/db/schema';

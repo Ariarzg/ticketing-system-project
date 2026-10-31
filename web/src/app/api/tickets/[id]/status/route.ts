@@ -28,7 +28,8 @@ export const PATCH = handle<{ params: Promise<{ id: string }> }>(
 				user.role,
 			);
 
-			if (next === 'closed') {
+			// "Answered" means the client has an answer (D1), and a pending reply has not reached them yet.
+			if (next === 'closed' || next === 'answered') {
 				const [{ n }] = await tx
 					.select({ n: count() })
 					.from(messages)

@@ -1,7 +1,13 @@
 'use client';
 
 import { Tabs } from '@heroui/react';
-import { PRIORITIES, STATUSES, type Status } from '@/lib/constants';
+import {
+	PRIORITIES,
+	STATUSES,
+	isStaff,
+	type Role,
+	type Status,
+} from '@/lib/constants';
 import { useOrganizations } from '@/lib/hooks/use-organizations';
 import { t } from '@/lib/strings.fa';
 import { SearchBox } from './SearchBox';
@@ -12,16 +18,17 @@ const priorityOptions = [
 	...PRIORITIES.map((id) => ({ id, label: t.priority[id] })),
 ];
 
-/** The views besides the status tabs. Each is its own URL flag (?attention=1, ?unassigned=1, ?review=1); only one is on at a time. */
+/** The work queues (D20). Each is its own URL flag (?attention=1, ?unassigned=1, ?review=1); only one is on at a time. */
 const VIEW_FLAGS = ['attention', 'unassigned', 'review'] as const;
-const isViewFlag = (key: string) =>
-	(VIEW_FLAGS as readonly string[]).includes(key);
 
+/**
+ * The tabs are the viewer's work queues: the supervisor's "no agent yet" and "waiting for approval", the agent's
+ * "needs a reply". The status is a filter like the others, so the tabs stay few. Clients have no queues.
+ */
 export function TicketFilters({
 	params,
 	setParams,
-	isAgent,
-	isSupervisor,
+	role,
 	statusCounts,
 	attentionCount,
 	unassignedCount,
@@ -30,133 +37,122 @@ export function TicketFilters({
 	params: URLSearchParams;
 	/** Changes several URL parameters in one navigation. A null value removes the parameter. */
 	setParams: (updates: Record<string, string | null>) => void;
-	/** True for all staff (agents and the supervisor). */
-	isAgent: boolean;
-	isSupervisor: boolean;
-	/** Undefined while the list loads, so the tabs show no number instead of a false zero. */
+	role: Role;
+	/** Undefined while the list loads, so nothing shows a false zero. */
 	statusCounts?: Record<Status, number>;
 	attentionCount?: number;
 	unassignedCount?: number;
 	reviewCount?: number;
 }) {
+	const staff = isStaff(role);
 	const { data: organizations } = useOrganizations();
 	const organizationOptions = [
 		{ id: 'all', label: t.filters.allOrganizations },
 		...(organizations ?? []).map((o) => ({ id: o.id, label: o.name })),
 	];
-	const view =
-		VIEW_FLAGS.find((flag) => params.get(flag) === '1') ??
-		params.get('status') ??
-		'all';
-	const total =
-		statusCounts ?
-			STATUSES.reduce((sum, s) => sum + statusCounts[s], 0)
-		:	undefined;
+	const view = VIEW_FLAGS.find((flag) => params.get(flag) === '1') ?? 'all';
+	const status = params.get('status') as Status | null;
 	const pick = (key: string) => (value: string) =>
 		setParams({ [key]: value === 'all' ? null : value });
 
-	// A view flag clears the status and the other flags; a status tab clears every flag.
-	function selectView(key: string) {
-		setParams({
-			...Object.fromEntries(
-				VIEW_FLAGS.map((flag) => [flag, flag === key ? '1' : null]),
-			),
-			status: isViewFlag(key) || key === 'all' ? null : key,
-		});
-	}
-
-	const tabs: { id: string; label: string; count?: number }[] = [
-		...(isSupervisor ?
-			[
-				{
-					id: 'unassigned',
-					label: t.filters.unassigned,
-					count: unassignedCount,
-				},
-				{ id: 'review', label: t.filters.review, count: reviewCount },
-			]
-		:	[]),
-		...(isAgent ?
-			[{ id: 'attention', label: t.filters.attention, count: attentionCount }]
-		:	[]),
-		{ id: 'all', label: t.filters.all, count: total },
+	// The status counts follow the search, priority and organization but not the queue, so they only show under "all".
+	const statusOptions = [
+		{ id: 'all', label: t.filters.allStatuses },
 		...STATUSES.map((s) => ({
 			id: s,
-			label: t.status[s],
-			count: statusCounts?.[s],
+			label:
+				statusCounts && view === 'all' ?
+					`${t.status[s]} (${statusCounts[s].toLocaleString('fa-IR')})`
+				:	t.status[s],
 		})),
 	];
+	const allCount =
+		statusCounts &&
+		(status ? statusCounts[status] : STATUSES.reduce((sum, s) => sum + statusCounts[s], 0));
+	const queues: { id: string; label: string; count?: number }[] =
+		role === 'supervisor' ?
+			[
+				{ id: 'all', label: t.filters.all, count: allCount },
+				{ id: 'unassigned', label: t.filters.unassigned, count: unassignedCount },
+				{ id: 'review', label: t.filters.review, count: reviewCount },
+			]
+		: role === 'agent' ?
+			[
+				{ id: 'all', label: t.filters.all, count: allCount },
+				{ id: 'attention', label: t.filters.attention, count: attentionCount },
+			]
+		:	[];
 
 	return (
 		<div className="flex flex-col gap-3">
-			{/* Six tabs do not fit a phone, and HeroUI's scroll arrows are labelled in English, so small screens get a select. */}
-			<SelectField
-				className="md:hidden"
-				label={t.filters.viewLabel}
-				hideLabel
-				value={view}
-				options={tabs.map((tab) => ({
-					id: tab.id,
-					label:
-						tab.count === undefined ?
-							tab.label
-						:	`${tab.label} (${tab.count.toLocaleString('fa-IR')})`,
-				}))}
-				onChange={selectView}
-			/>
-			<Tabs
-				className="hidden md:block"
-				selectedKey={view}
-				onSelectionChange={(key) => selectView(String(key))}
-			>
-				<Tabs.ListContainer className="overflow-x-auto">
-					<Tabs.List aria-label={t.filters.viewLabel}>
-						{tabs.map((tab) => (
-							<Tabs.Tab
-								key={tab.id}
-								id={tab.id}
-								className="whitespace-nowrap"
-							>
-								{tab.label}
-								{tab.count !== undefined && (
-									<span className="ms-2 text-xs tabular-nums text-muted">
-										{tab.count.toLocaleString('fa-IR')}
-									</span>
-								)}
-								<Tabs.Indicator />
-							</Tabs.Tab>
-						))}
-					</Tabs.List>
-				</Tabs.ListContainer>
-			</Tabs>
+			{queues.length > 0 && (
+				<Tabs
+					selectedKey={view}
+					onSelectionChange={(key) =>
+						setParams(
+							Object.fromEntries(
+								VIEW_FLAGS.map((flag) => [flag, flag === key ? '1' : null]),
+							),
+						)
+					}
+				>
+					<Tabs.ListContainer>
+						<Tabs.List aria-label={t.filters.viewLabel}>
+							{queues.map((queue) => (
+								<Tabs.Tab
+									key={queue.id}
+									id={queue.id}
+									className="whitespace-nowrap"
+								>
+									{queue.label}
+									{queue.count !== undefined && (
+										<span className="ms-2 text-xs tabular-nums text-muted">
+											{queue.count.toLocaleString('fa-IR')}
+										</span>
+									)}
+									<Tabs.Indicator />
+								</Tabs.Tab>
+							))}
+						</Tabs.List>
+					</Tabs.ListContainer>
+				</Tabs>
+			)}
 
 			<div className="flex flex-wrap items-center gap-3">
 				<SearchBox
-					className="w-full sm:w-80"
+					className="w-full sm:w-72"
 					value={params.get('q') ?? ''}
 					onChange={(v) => setParams({ q: v.trim() || null })}
 					label={t.filters.search}
 					placeholder={
-						isAgent ?
+						staff ?
 							t.filters.searchAgentPlaceholder
 						:	t.filters.searchClientPlaceholder
 					}
 				/>
+				<SelectField
+					hideLabel
+					className="min-w-36 flex-1 sm:w-44 sm:flex-none"
+					label={t.tickets.colStatus}
+					value={status ?? 'all'}
+					options={statusOptions}
+					onChange={pick('status')}
+				/>
 				{/* Clients never see the priority, so they get no priority filter (D26). */}
-				{isAgent && (
+				{staff && (
 					<SelectField
 						hideLabel
-						className="min-w-36 flex-1 sm:w-44 sm:flex-none"
+						className="min-w-36 flex-1 sm:w-40 sm:flex-none"
 						label={t.tickets.colPriority}
 						value={params.get('priority') ?? 'all'}
 						options={priorityOptions}
 						onChange={pick('priority')}
 					/>
 				)}
-				{isAgent && (
+				{staff && (
 					<SelectField
 						hideLabel
-						className="min-w-36 flex-1 sm:w-52 sm:flex-none"
+						className="min-w-36 flex-1 sm:w-48 sm:flex-none"
 						label={t.tickets.colOrganization}
 						value={params.get('organization') ?? 'all'}
 						options={organizationOptions}

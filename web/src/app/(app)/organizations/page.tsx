@@ -1,4 +1,3 @@
-// file: src/app/(app)/organizations/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -6,7 +5,6 @@ import Link from 'next/link';
 import { Chip, Skeleton, buttonVariants } from '@heroui/react';
 import {
 	BuildingsIcon,
-	PencilSimpleIcon,
 	PlusIcon,
 	TrashIcon,
 } from '@phosphor-icons/react';
@@ -14,7 +12,6 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { EmptyBox } from '@/components/EmptyBox';
 import { LoadingButton } from '@/components/LoadingButton';
 import { PageHeader } from '@/components/PageHeader';
-import { formatDay } from '@/lib/dates';
 import {
 	useDeleteOrganization,
 	useOrganizations,
@@ -54,13 +51,9 @@ export default function OrganizationsPage() {
 					{Array.from({ length: 3 }, (_, i) => (
 						<div
 							key={i}
-							className="flex items-center gap-4 px-4 py-4"
+							className="px-4 py-4"
 						>
-							<Skeleton className="size-10 rounded-full" />
-							<div className="flex-1 space-y-2">
-								<Skeleton className="h-4 w-40 rounded-lg" />
-								<Skeleton className="h-3 w-24 rounded-lg" />
-							</div>
+							<Skeleton className="h-4 w-40 rounded-lg" />
 						</div>
 					))}
 				</div>
@@ -77,51 +70,33 @@ export default function OrganizationsPage() {
 
 			{organizations && organizations.length > 0 && (
 				<ul className="divide-y divide-separator overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--surface-shadow)]">
-					{organizations.map((o, index) => (
+					{organizations.map((o) => (
+						// The whole row opens the organization's page (D29), where it is also renamed; only delete stays here.
 						<li
 							key={o.id}
-							className="rise flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5"
-							style={{ '--i': Math.min(index, 8) } as React.CSSProperties}
+							className="relative flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-surface-secondary"
 						>
-							<span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent-soft text-accent-soft-foreground">
-								<BuildingsIcon size={20} />
-							</span>
-							<div className="min-w-0 flex-1">
-								<p className="flex items-center gap-2">
-									{/* The name opens the organization's own page (D29). Own direction plus text-right: a Latin name stays on the right and truncates at its end. */}
-									<Link
-										href={`/organizations/${o.id}`}
-										dir="auto"
-										className="truncate text-right font-medium hover:underline focus-visible:outline-2 focus-visible:outline-focus"
-									>
-										{o.name}
-									</Link>
-									{o.isDefault && (
-										<Chip
-											size="sm"
-											color="accent"
-											variant="soft"
-											className="shrink-0"
-										>
-											{t.organizations.default}
-										</Chip>
-									)}
-								</p>
-								<p className="mt-0.5 text-xs text-muted">
-									{t.organizations.createdLabel}: {formatDay(o.createdAt)}
-								</p>
-							</div>
-							<div className="flex shrink-0 items-center gap-2">
+							<p className="flex min-w-0 flex-1 items-center gap-2">
+								{/* The link's ::after covers the row. Own direction plus text-right: a Latin name stays on the right and truncates at its end. */}
 								<Link
-									href={`/organizations/${o.id}/edit`}
-									className={buttonVariants({
-										size: 'sm',
-										variant: 'secondary',
-									})}
+									href={`/organizations/${o.id}`}
+									dir="auto"
+									className="truncate text-right font-medium after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-focus"
 								>
-									<PencilSimpleIcon size={16} />
-									{t.organizations.edit}
+									{o.name}
 								</Link>
+								{o.isDefault && (
+									<Chip
+										size="sm"
+										color="accent"
+										variant="soft"
+										className="shrink-0"
+									>
+										{t.organizations.default}
+									</Chip>
+								)}
+							</p>
+							<div className="relative flex shrink-0 items-center">
 								{!o.isDefault && (
 									<LoadingButton
 										size="sm"

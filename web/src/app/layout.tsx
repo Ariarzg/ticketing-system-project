@@ -1,4 +1,3 @@
-// file: src/app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { Vazirmatn } from "next/font/google";
 import "./globals.css";

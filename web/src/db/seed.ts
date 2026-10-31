@@ -1,4 +1,3 @@
-// file: src/db/seed.ts
 import { eq } from 'drizzle-orm';
 import { db } from './index';
 import { organizations, users } from './schema';

@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Kbd, ScrollShadow, Skeleton, TextArea } from "@heroui/react";
+import Link from "next/link";
+import { Kbd, Skeleton, TextArea } from "@heroui/react";
 import {
   HourglassMediumIcon,
   LockSimpleIcon,
   PaperPlaneTiltIcon,
   PencilSimpleIcon,
   ProhibitIcon,
-  SealCheckIcon,
 } from "@phosphor-icons/react";
 import { isStaff } from "@/lib/constants";
 import { useMessages, useSendMessage, type MessageDto } from "@/lib/hooks/use-messages";
@@ -39,12 +39,12 @@ export function Thread({ ticket, me }: { ticket: TicketDetailDto; me: MeUser }) 
   const [body, setBody] = useState(() => readDraft(draftKey));
   // Chosen files are not kept with the draft: a browser cannot put a File in sessionStorage.
   const [files, setFiles] = useState<File[]>([]);
-  const listRef = useRef<HTMLDivElement>(null);
-  // True while the reader is at the newest message. Polled messages only scroll the list then,
-  // so someone reading older messages is not pulled down every few seconds.
-  const atBottom = useRef(true);
+  // The thread is part of the page, not a box with its own scrollbar. True while the reader is at the bottom of the
+  // page: a polled message then keeps them there, and someone reading older messages is not pulled down.
+  const atBottom = useRef(false);
   const count = messages?.length ?? 0;
   const closed = ticket.status === "closed";
+  const client = me.role === "client";
 
   useEffect(() => {
     try {
@@ -56,19 +56,22 @@ export function Thread({ ticket, me }: { ticket: TicketDetailDto; me: MeUser }) 
   }, [body, draftKey]);
 
   useEffect(() => {
-    const el = listRef.current;
-    if (el && atBottom.current) el.scrollTop = el.scrollHeight;
-  }, [count]);
+    const track = () => {
+      const page = document.documentElement;
+      atBottom.current = page.scrollHeight - window.scrollY - window.innerHeight < 80;
+    };
+    window.addEventListener("scroll", track, { passive: true });
+    return () => window.removeEventListener("scroll", track);
+  }, []);
 
-  function onScroll(e: React.UIEvent<HTMLDivElement>) {
-    const el = e.currentTarget;
-    atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-  }
+  useEffect(() => {
+    if (atBottom.current) window.scrollTo({ top: document.documentElement.scrollHeight });
+  }, [count]);
 
   function submit() {
     const text = body.trim();
     if ((!text && files.length === 0) || send.isPending) return;
-    atBottom.current = true; // your own message always comes into view
+    atBottom.current = true; // your own message always stays in view
     send.mutate(
       { body: text, files },
       {
@@ -83,14 +86,7 @@ export function Thread({ ticket, me }: { ticket: TicketDetailDto; me: MeUser }) 
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--surface-shadow)]">
       {/* role="log": screen readers announce messages that arrive by polling, without reading the whole thread again. */}
-      <ScrollShadow
-        ref={listRef}
-        onScroll={onScroll}
-        role="log"
-        aria-live="polite"
-        aria-label={t.thread.label}
-        className="flex max-h-[32rem] min-h-48 flex-col gap-5 overflow-y-auto overscroll-contain p-4 sm:p-5"
-      >
+      <div role="log" aria-live="polite" aria-label={t.thread.label} className="flex flex-col gap-5 p-4 sm:p-5">
         {/* The description is the first bubble of the thread (D17). */}
         <MessageBubble
           author={ticket.authorName}
@@ -113,72 +109,81 @@ export function Thread({ ticket, me }: { ticket: TicketDetailDto; me: MeUser }) 
             Date.parse(m.createdAt) - Date.parse(prev.createdAt) < GROUP_WINDOW_MS;
           return <ThreadMessage key={m.id} message={m} me={me} ticketId={ticket.id} grouped={grouped} />;
         })}
-      </ScrollShadow>
-
-      <div className="border-t border-separator bg-surface-secondary/50 p-3 sm:p-4">
-        {closed ? (
-          <p className="flex items-center gap-2 text-sm text-muted">
-            <LockSimpleIcon size={18} />
-            {t.thread.closedNotice}
-          </p>
-        ) : me.role === "supervisor" ? (
-          // The supervisor assigns and supervises but never writes to the client (D25).
-          <p className="text-sm text-muted">{t.thread.supervisorNotice}</p>
-        ) : (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              submit();
-            }}
-            className="flex flex-col gap-2"
-          >
-            <TextArea
-              aria-label={t.thread.yourReply}
-              // Empty, dir="auto" would turn the Persian placeholder left-to-right.
-              dir={body ? "auto" : "rtl"}
-              rows={3}
-              fullWidth
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              onKeyDown={(e) => {
-                // Enter sends and Shift+Enter makes a new line, but only with a mouse or trackpad: touch
-                // keyboards have no Shift+Enter, so on phones Enter is a new line and the button sends.
-                // Enter is also ignored while an IME is still composing a word.
-                if (
-                  e.key === "Enter" &&
-                  !e.shiftKey &&
-                  !e.nativeEvent.isComposing &&
-                  window.matchMedia("(pointer: fine)").matches
-                ) {
-                  e.preventDefault();
-                  submit();
-                }
-              }}
-              placeholder={t.thread.replyPlaceholder}
-            />
-            <PickedFiles files={files} onChange={setFiles} />
-            <div className="flex items-center justify-between gap-3">
-              <AttachButton files={files} onChange={setFiles} isDisabled={send.isPending} />
-              <span className="hidden items-center gap-1.5 text-xs text-muted pointer-fine:flex">
-                <Kbd dir="ltr">
-                  <Kbd.Content>Enter</Kbd.Content>
-                </Kbd>
-                {t.thread.sendHint}
-              </span>
-              <LoadingButton
-                type="submit"
-                variant="primary"
-                isPending={send.isPending}
-                isDisabled={body.trim() === "" && files.length === 0}
-                icon={<PaperPlaneTiltIcon size={18} />}
-                className="ms-auto"
-              >
-                {t.thread.send}
-              </LoadingButton>
-            </div>
-          </form>
+        {/* Until a reply reaches them, the client learns where it will appear. */}
+        {client && !closed && messages?.length === 0 && (
+          <p className="text-center text-sm text-muted">{t.tickets.waitingForReply}</p>
         )}
       </div>
+
+      {/* The supervisor assigns and reviews but never writes to the client (D25), so they get no composer. */}
+      {me.role !== "supervisor" && (
+        <div className="border-t border-separator bg-surface-secondary/50 p-3 sm:p-4">
+          {closed ? (
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+              <LockSimpleIcon size={18} />
+              {t.thread.closedNotice}
+              {client && (
+                <Link href="/tickets/new" className="font-medium text-accent-soft-foreground hover:underline">
+                  {t.nav.newTicket}
+                </Link>
+              )}
+            </p>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                submit();
+              }}
+              className="flex flex-col gap-2"
+            >
+              <TextArea
+                aria-label={t.thread.yourReply}
+                // Empty, dir="auto" would turn the Persian placeholder left-to-right.
+                dir={body ? "auto" : "rtl"}
+                rows={3}
+                fullWidth
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter sends and Shift+Enter makes a new line, but only with a mouse or trackpad: touch
+                  // keyboards have no Shift+Enter, so on phones Enter is a new line and the button sends.
+                  // Enter is also ignored while an IME is still composing a word.
+                  if (
+                    e.key === "Enter" &&
+                    !e.shiftKey &&
+                    !e.nativeEvent.isComposing &&
+                    window.matchMedia("(pointer: fine)").matches
+                  ) {
+                    e.preventDefault();
+                    submit();
+                  }
+                }}
+                placeholder={t.thread.replyPlaceholder}
+              />
+              <PickedFiles files={files} onChange={setFiles} />
+              <div className="flex items-center justify-between gap-3">
+                <AttachButton files={files} onChange={setFiles} isDisabled={send.isPending} />
+                <span className="hidden items-center gap-1.5 text-xs text-muted pointer-fine:flex">
+                  <Kbd dir="ltr">
+                    <Kbd.Content>Enter</Kbd.Content>
+                  </Kbd>
+                  {t.thread.sendHint}
+                </span>
+                <LoadingButton
+                  type="submit"
+                  variant="primary"
+                  isPending={send.isPending}
+                  isDisabled={body.trim() === "" && files.length === 0}
+                  icon={<PaperPlaneTiltIcon size={18} />}
+                  className="ms-auto"
+                >
+                  {t.thread.send}
+                </LoadingButton>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -234,9 +239,8 @@ function ThreadMessage({
     );
   }
 
-  if (review.status === "confirmed") {
-    return bubble("default", <ReviewMark icon={<SealCheckIcon size={14} />} text={t.review.confirmed} />);
-  }
+  // Confirmed is the normal outcome, so it carries no mark: only replies that are waiting, changed or denied do.
+  if (review.status === "confirmed") return bubble("default");
 
   // Changed or denied: the agent's original stays visible to staff, and the supervisor's text follows it.
   const changed = review.status === "changed";

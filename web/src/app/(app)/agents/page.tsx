@@ -1,4 +1,3 @@
-// file: src/app/(app)/agents/page.tsx
 'use client';
 
 import { Suspense, useEffect, useRef } from 'react';
@@ -13,7 +12,6 @@ import { useMe } from '@/lib/hooks/use-me';
 import { useAgents } from '@/lib/hooks/use-users';
 import { initials } from '@/lib/initials';
 import { t } from '@/lib/strings.fa';
-import { OrganizationChip } from '@/components/OrganizationChip';
 
 export default function AgentsPage() {
 	// useSearchParams needs a Suspense boundary.
@@ -99,17 +97,13 @@ function AgentsView() {
 						className="hidden items-center gap-4 px-4 text-xs font-medium text-muted sm:flex"
 					>
 						<span className="flex-1">{t.users.colName}</span>
-						<span className="w-40">{t.users.colOrganization}</span>
 						<span className="w-14 text-end">{t.agents.colActive}</span>
 						<span className="w-14 text-end">{t.agents.colClosed}</span>
 					</div>
 					<ul className="divide-y divide-separator overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--surface-shadow)]">
-						{agents.map((a, index) => (
-							<li
-								key={a.id}
-								className="rise"
-								style={{ '--i': Math.min(index, 8) } as React.CSSProperties}
-							>
+						{/* Staff always belong to the default organization (D24), so no organization column. */}
+						{agents.map((a) => (
+							<li key={a.id}>
 								<Link
 									href={`/users/${a.slug}`}
 									className="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
@@ -134,12 +128,6 @@ function AgentsView() {
 										>
 											{a.email}
 										</p>
-										<div className="mt-1.5 sm:hidden">
-											<OrganizationChip id={a.organizationId} />
-										</div>
-									</div>
-									<div className="hidden w-40 sm:block">
-										<OrganizationChip id={a.organizationId} />
 									</div>
 									{[
 										{ label: t.agents.colActive, value: a.activeTickets, strong: true },

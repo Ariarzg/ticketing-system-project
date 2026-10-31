@@ -1,4 +1,3 @@
-// file: src/lib/hooks/use-users.tsx
 'use client';
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';

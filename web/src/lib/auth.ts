@@ -1,4 +1,3 @@
-// file: src/lib/auth.ts
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { users } from '@/db/schema';

@@ -1,4 +1,3 @@
-// file: src/components/PromoteButton.tsx
 'use client';
 
 import { useState } from 'react';
@@ -19,8 +18,8 @@ export function PromoteButton({
 	const promote = usePromote(slug);
 	const [confirming, setConfirming] = useState(false);
 
-	if (hasTickets)
-		return <p className="text-sm text-muted">{t.users.promoteHasTickets}</p>;
+	// Only a client without tickets can become an agent (D23); the /agents page says so once.
+	if (hasTickets) return null;
 
 	return (
 		<>

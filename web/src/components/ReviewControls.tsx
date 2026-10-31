@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, TextArea } from '@heroui/react';
 import {
 	PencilSimpleIcon,
@@ -25,9 +25,27 @@ export function ReviewControls({
 	const [mode, setMode] = useState<Mode>('buttons');
 	const [text, setText] = useState('');
 	const busy = review.isPending && review.variables?.messageId === message.id;
+	// Keyboard and screen-reader users follow the form: focus moves into it when it opens and back to the
+	// button that opened it on cancel. The form also scrolls into view, since it can open below the fold.
+	const root = useRef<HTMLDivElement>(null);
+	const openedBy = useRef<Mode>('buttons');
+	useEffect(() => {
+		if (mode !== 'buttons') {
+			const field = root.current?.querySelector('textarea');
+			field?.focus();
+			field?.setSelectionRange(field.value.length, field.value.length);
+			root.current?.scrollIntoView({ block: 'nearest' });
+		} else if (openedBy.current !== 'buttons') {
+			root.current
+				?.querySelector<HTMLElement>(`[data-review="${openedBy.current}"]`)
+				?.focus();
+			openedBy.current = 'buttons';
+		}
+	}, [mode]);
 
 	function open(next: 'change' | 'deny') {
 		setText(next === 'change' ? message.body : '');
+		openedBy.current = next;
 		setMode(next);
 	}
 
@@ -43,7 +61,10 @@ export function ReviewControls({
 
 	if (mode === 'buttons') {
 		return (
-			<div className="flex flex-wrap gap-2">
+			<div
+				ref={root}
+				className="flex flex-wrap gap-2"
+			>
 				<LoadingButton
 					size="sm"
 					variant="primary"
@@ -58,6 +79,7 @@ export function ReviewControls({
 				<Button
 					size="sm"
 					variant="secondary"
+					data-review="change"
 					isDisabled={busy}
 					onPress={() => open('change')}
 				>
@@ -67,6 +89,7 @@ export function ReviewControls({
 				<Button
 					size="sm"
 					variant="danger-soft"
+					data-review="deny"
 					isDisabled={busy}
 					onPress={() => open('deny')}
 				>
@@ -78,42 +101,47 @@ export function ReviewControls({
 	}
 
 	return (
-		<form
-			className="flex w-full min-w-64 flex-col gap-2"
-			onSubmit={(e) => {
-				e.preventDefault();
-				send();
-			}}
+		<div
+			ref={root}
+			className="w-full"
 		>
-			<TextArea
-				aria-label={mode === 'change' ? t.review.changeLabel : t.review.denyLabel}
-				// Empty, dir="auto" would turn the Persian placeholder left-to-right.
-				dir={text ? 'auto' : 'rtl'}
-				rows={3}
-				fullWidth
-				value={text}
-				onChange={(e) => setText(e.target.value)}
-				placeholder={mode === 'deny' ? t.review.denyPlaceholder : undefined}
-			/>
-			<div className="flex justify-end gap-2">
-				<Button
-					size="sm"
-					variant="tertiary"
-					isDisabled={busy}
-					onPress={() => setMode('buttons')}
-				>
-					{t.common.cancel}
-				</Button>
-				<LoadingButton
-					type="submit"
-					size="sm"
-					variant={mode === 'deny' ? 'danger' : 'primary'}
-					isPending={busy}
-					isDisabled={text.trim() === ''}
-				>
-					{mode === 'change' ? t.review.sendChanged : t.review.sendDeny}
-				</LoadingButton>
-			</div>
-		</form>
+			<form
+				className="flex w-full min-w-64 flex-col gap-2"
+				onSubmit={(e) => {
+					e.preventDefault();
+					send();
+				}}
+			>
+				<TextArea
+					aria-label={mode === 'change' ? t.review.changeLabel : t.review.denyLabel}
+					// Empty, dir="auto" would turn the Persian placeholder left-to-right.
+					dir={text ? 'auto' : 'rtl'}
+					rows={3}
+					fullWidth
+					value={text}
+					onChange={(e) => setText(e.target.value)}
+					placeholder={mode === 'deny' ? t.review.denyPlaceholder : undefined}
+				/>
+				<div className="flex justify-end gap-2">
+					<Button
+						size="sm"
+						variant="tertiary"
+						isDisabled={busy}
+						onPress={() => setMode('buttons')}
+					>
+						{t.common.cancel}
+					</Button>
+					<LoadingButton
+						type="submit"
+						size="sm"
+						variant={mode === 'deny' ? 'danger' : 'primary'}
+						isPending={busy}
+						isDisabled={text.trim() === ''}
+					>
+						{mode === 'change' ? t.review.sendChanged : t.review.sendDeny}
+					</LoadingButton>
+				</div>
+			</form>
+		</div>
 	);
 }

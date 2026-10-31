@@ -12,11 +12,14 @@ export function OrganizationForm({
 	submitLabel,
 	isPending,
 	onSubmit,
+	cancelHref = '/organizations',
 }: {
 	initialName?: string;
 	submitLabel: string;
 	isPending: boolean;
 	onSubmit: (name: string) => void;
+	/** Where "cancel" goes: back where the form was opened from. */
+	cancelHref?: string;
 }) {
 	const router = useRouter();
 	const [name, setName] = useState(initialName);
@@ -51,7 +54,7 @@ export function OrganizationForm({
 			<div className="flex items-center justify-end gap-2 border-t border-separator pt-5">
 				<Button
 					variant="tertiary"
-					onPress={() => router.push('/organizations')}
+					onPress={() => router.push(cancelHref)}
 				>
 					{t.common.cancel}
 				</Button>

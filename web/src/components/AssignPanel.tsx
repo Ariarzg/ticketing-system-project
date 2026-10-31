@@ -34,13 +34,15 @@ export function AssignPanel({ ticketId }: { ticketId: string }) {
 	const [priority, setPriority] = useState<string | null>(null);
 	const [confirming, setConfirming] = useState(false);
 	const ready = agentId !== null && priority !== null;
+	// The choice is permanent, so each agent shows how many active tickets they already have, the least busy first.
+	const byLoad = [...(agents ?? [])].sort(
+		(a, b) => a.activeTickets - b.activeTickets,
+	);
 
 	return (
 		<div className="flex flex-col gap-3 border-t border-separator pt-4">
-			<p className="text-xs font-medium text-muted">{t.assign.title}</p>
 			<Autocomplete
 				fullWidth
-				variant="secondary"
 				selectionMode="single"
 				placeholder={t.assign.agentPlaceholder}
 				value={agentId}
@@ -48,7 +50,12 @@ export function AssignPanel({ ticketId }: { ticketId: string }) {
 			>
 				<Label>{t.assign.agent}</Label>
 				<Autocomplete.Trigger>
-					<Autocomplete.Value />
+					{/* Only the name: an option also carries the agent's workload, which the field does not need. */}
+					<Autocomplete.Value>
+						{({ defaultChildren, isPlaceholder, selectedText }) =>
+							isPlaceholder ? defaultChildren : selectedText
+						}
+					</Autocomplete.Value>
 					<Autocomplete.ClearButton aria-label={t.assign.clear} />
 					<Autocomplete.Indicator />
 				</Autocomplete.Trigger>
@@ -74,13 +81,21 @@ export function AssignPanel({ ticketId }: { ticketId: string }) {
 								<EmptyState>{t.assign.noAgents}</EmptyState>
 							)}
 						>
-							{(agents ?? []).map((agent) => (
+							{byLoad.map((agent) => (
 								<ListBox.Item
 									key={agent.id}
 									id={agent.id}
 									textValue={agent.name}
 								>
-									{agent.name}
+									<span
+										dir="auto"
+										className="min-w-0 flex-1 truncate text-right"
+									>
+										{agent.name}
+									</span>
+									<span className="shrink-0 text-xs tabular-nums text-muted">
+										{agent.activeTickets.toLocaleString('fa-IR')} {t.agents.colActive}
+									</span>
 									<ListBox.ItemIndicator />
 								</ListBox.Item>
 							))}

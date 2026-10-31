@@ -1,10 +1,8 @@
-// file: src/components/MessageBubble.tsx
 import { Avatar } from '@heroui/react';
 import { isStaff, type Role } from '@/lib/constants';
 import { formatDate, formatRelative } from '@/lib/dates';
 import type { AttachmentDto } from '@/lib/files';
 import { initials } from '@/lib/initials';
-import { t } from '@/lib/strings.fa';
 import { Attachments } from './Attachments';
 
 /** How a bubble is drawn. Only staff ever see anything but "default" (D27). */
@@ -74,11 +72,14 @@ export function MessageBubble({
 			>
 				{!grouped && (
 					<div className="flex items-center gap-2 px-1 text-xs text-muted">
-						<span className="font-medium text-foreground">{author}</span>
-						{/* `role &&` again so TypeScript knows role is set inside. */}
-						{role && staff && (
-							<span className="rounded-full bg-accent-soft px-1.5 leading-5 text-accent-soft-foreground">
-								{t.role[role]}
+						{/* Your own messages are marked by their fill and side, so they carry only the time.
+						    Staff and client are told apart by side and avatar colour, so no role badge either. */}
+						{!mine && (
+							<span
+								dir="auto"
+								className="font-medium text-foreground"
+							>
+								{author}
 							</span>
 						)}
 						<time

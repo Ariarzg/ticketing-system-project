@@ -70,13 +70,7 @@ export const GET = handle(async (req) => {
 		supervisor && query.review ? needsReview : undefined,
 	);
 
-	const [
-		items,
-		[{ total }],
-		countRows,
-		[{ unassignedCount }],
-		[{ reviewCount }],
-	] = await Promise.all([
+	const [items, [{ total }], countRows] = await Promise.all([
 			db
 				.select(ticketColumns)
 				.from(tickets)
@@ -90,32 +84,37 @@ export const GET = handle(async (req) => {
 				.from(tickets)
 				.innerJoin(users, eq(tickets.userId, users.id))
 				.where(where),
-			// Counts per status for the tabs. They follow the search, priority and organization, but not the view,
-			// so each tab says how many rows it would show and "all" matches the list under it.
+			// Counts for the status filter and the queue tabs, in one pass. They follow the search, priority and
+			// organization, but not the view, so each says how many rows it would show.
 			db
-				.select({ status: tickets.status, n: count() })
+				.select({
+					status: tickets.status,
+					n: count(),
+					unassigned: sql<number>`count(*) filter (where ${unassigned})`.mapWith(Number),
+					review: sql<number>`count(*) filter (where ${needsReview})`.mapWith(Number),
+				})
 				.from(tickets)
 				.innerJoin(users, eq(tickets.userId, users.id))
 				.where(base)
 				.groupBy(tickets.status),
-			db
-				.select({ unassignedCount: count() })
-				.from(tickets)
-				.innerJoin(users, eq(tickets.userId, users.id))
-				.where(and(base, unassigned)),
-			db
-				.select({ reviewCount: count() })
-				.from(tickets)
-				.innerJoin(users, eq(tickets.userId, users.id))
-				.where(and(base, needsReview)),
 		]);
 
 	const statusCounts = Object.fromEntries(
 		STATUSES.map((s) => [s, 0]),
 	) as Record<(typeof STATUSES)[number], number>;
-	for (const row of countRows) statusCounts[row.status] = row.n;
+	let unassignedCount = 0;
+	let reviewCount = 0;
+	// The queue tabs sit above the status filter, so their counts follow a chosen status too.
+	const inStatus = (s: (typeof STATUSES)[number]) =>
+		!query.status || query.status === s;
+	for (const row of countRows) {
+		statusCounts[row.status] = row.n;
+		if (!inStatus(row.status)) continue;
+		unassignedCount += row.unassigned;
+		reviewCount += row.review;
+	}
 	const attentionCount = ATTENTION_STATUSES.reduce(
-		(sum, s) => sum + statusCounts[s],
+		(sum, s) => sum + (inStatus(s) ? statusCounts[s] : 0),
 		0,
 	);
 
